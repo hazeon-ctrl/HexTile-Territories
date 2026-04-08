@@ -1,749 +1,1363 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hex Territory Wars - v42</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hex Territory Wars</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300&display=swap');
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #111827;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            background: #1f2937;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            max-width: 850px;
-        }
-
-        h1 {
-            color: white;
-            font-size: 28px;
-            margin-bottom: 16px;
-            text-align: center;
-        }
-
-        .controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-
-        .turn-info {
-            color: white;
-        }
-
-        .turn-info .subtitle {
-            font-size: 12px;
-            opacity: 0.7;
-        }
-
-        .turn-info .current-faction {
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        button {
-            padding: 8px 24px;
-            background: #16a34a;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        button:hover:not(:disabled) {
-            background: #15803d;
-        }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .stats {
-            color: white;
-            text-align: right;
-            font-size: 14px;
-        }
-
-        .stat-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            justify-content: flex-end;
-        }
-
-        .stat-color {
-            width: 16px;
-            height: 16px;
-            border-radius: 3px;
-        }
-
-        canvas {
-            border: 2px solid #4b5563;
-            border-radius: 8px;
-            background: #374151;
-            cursor: pointer;
-            display: block;
-            margin: 0 auto;
-        }
-
-        .instructions {
-            color: #d1d5db;
-            font-size: 14px;
-            margin-top: 16px;
-            max-width: 700px;
-        }
-
-        .instructions strong {
-            color: white;
-        }
-
-        .instructions ul {
-            list-style-position: inside;
-            margin-top: 8px;
-        }
-
-        .instructions li {
-            margin: 4px 0;
-        }
-    </style>
+:root {
+  --bg-deep:#08090b; --bg-mid:#101218; --bg-panel:#14161f;
+  --border:#252830; --border-glow:#383d4a;
+  --gold:#c9a84c; --gold-light:#e8c97a; --gold-dim:#7a6030;
+  --bone:#d4c9a8; --bone-light:#ede6cc; --bone-dim:#7a7060;
+  --slate:#5a6878; --slate-light:#8a9aaa; --slate-dim:#2a3440;
+  --text:#b8bcc8; --text-dim:#565a68; --green:#4caf76;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Crimson Pro',Georgia,serif;background:var(--bg-deep);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:16px;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(1px 1px at 15% 20%,rgba(255,255,255,.35) 0%,transparent 100%),radial-gradient(1px 1px at 42% 68%,rgba(255,255,255,.25) 0%,transparent 100%),radial-gradient(1px 1px at 71% 14%,rgba(255,255,255,.3) 0%,transparent 100%),radial-gradient(2px 2px at 60% 40%,rgba(200,168,100,.1) 0%,transparent 100%);pointer-events:none;z-index:0;}
+.wrapper{position:relative;z-index:1;width:100%;max-width:940px;}
+header{text-align:center;margin-bottom:14px;}
+header h1{font-family:'Cinzel',serif;font-weight:900;font-size:clamp(20px,4vw,34px);letter-spacing:.12em;color:var(--gold-light);text-shadow:0 0 30px rgba(201,168,76,.4),0 2px 4px rgba(0,0,0,.8);}
+header .subtitle{font-style:italic;color:var(--text-dim);font-size:12px;letter-spacing:.15em;margin-top:2px;}
+.game-layout{display:grid;grid-template-columns:176px 1fr 176px;gap:10px;align-items:start;}
+@media(max-width:680px){.game-layout{grid-template-columns:1fr;}.panel-left,.panel-right{display:flex;flex-wrap:wrap;gap:8px;}}
+.panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:8px;padding:12px;}
+.panel+.panel{margin-top:8px;}
+.panel-title{font-family:'Cinzel',serif;font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold-dim);border-bottom:1px solid var(--border);padding-bottom:7px;margin-bottom:9px;}
+.faction-card{border-radius:5px;padding:9px;margin-bottom:7px;border:1px solid transparent;transition:all .3s;}
+.faction-card.active-blue{background:rgba(212,201,168,.06);border-color:var(--bone);box-shadow:0 0 12px rgba(212,201,168,.12);}
+.faction-card.active-red{background:rgba(90,104,120,.07);border-color:var(--slate);box-shadow:0 0 12px rgba(90,104,120,.14);}
+.faction-card.inactive{opacity:.4;}
+.faction-name{font-family:'Cinzel',serif;font-size:11px;font-weight:700;margin-bottom:5px;}
+.faction-name.blue{color:var(--bone-light);}.faction-name.red{color:var(--slate-light);}
+.faction-stat{font-size:11px;color:var(--text-dim);display:flex;justify-content:space-between;margin:2px 0;}
+.faction-stat span{color:var(--text);}
+.turn-indicator{display:flex;align-items:center;gap:5px;margin-top:5px;}
+.turn-dot{width:7px;height:7px;border-radius:50%;animation:pulse 1.2s ease-in-out infinite;}
+.turn-dot.blue{background:var(--bone);box-shadow:0 0 5px var(--bone);}
+.turn-dot.red{background:var(--slate-light);box-shadow:0 0 5px var(--slate-light);}
+.turn-label{font-size:10px;color:var(--text-dim);font-style:italic;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.65)}}
+.moves-row{display:flex;gap:4px;margin:7px 0;flex-wrap:wrap;}
+.move-pip{width:13px;height:13px;border-radius:2px;border:1px solid var(--border-glow);background:var(--bg-mid);transition:all .2s;}
+.move-pip.used{background:var(--gold-dim);border-color:var(--gold);box-shadow:0 0 4px rgba(201,168,76,.35);}
+.move-pip.active{background:var(--gold);border-color:var(--gold-light);box-shadow:0 0 6px rgba(201,168,76,.6);}
+.move-pip.road{background:#5a4010;border-color:#c9a060;box-shadow:0 0 5px rgba(201,160,96,.5);}
+.round-display{text-align:center;margin-bottom:8px;}
+.round-num{font-family:'Cinzel',serif;font-size:26px;color:var(--gold);line-height:1;}
+.round-label{font-size:9px;letter-spacing:.22em;color:var(--text-dim);text-transform:uppercase;}
+.world-badge{display:none;background:linear-gradient(135deg,rgba(45,90,39,.3),rgba(20,40,18,.3));border:1px solid #4a8a40;border-radius:5px;padding:6px 9px;margin-top:6px;font-size:10px;color:#7dbf70;font-style:italic;text-align:center;}
+.world-badge.show{display:block;}
+.legend-item{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text-dim);margin:4px 0;}
+.legend-swatch{width:11px;height:11px;border-radius:2px;flex-shrink:0;}
+.log-scroll{height:110px;overflow-y:auto;font-size:10.5px;line-height:1.65;}
+.log-scroll::-webkit-scrollbar{width:3px;}
+.log-scroll::-webkit-scrollbar-thumb{background:var(--border-glow);border-radius:2px;}
+.log-entry{color:var(--text-dim);padding:1px 0;border-bottom:1px solid rgba(255,255,255,.03);}
+.log-entry.blue{color:var(--bone-light);}.log-entry.red{color:var(--slate-light);}
+.log-entry.gold{color:var(--gold);}.log-entry.forest{color:#7dbf70;}
+.log-entry.world{color:#4a7a44;font-style:italic;}.log-entry.road{color:#c9a060;}
+.log-entry.draft{color:#a0b8c8;font-style:italic;}.log-entry.shield{color:#c0b090;font-style:italic;}
+.canvas-wrap{position:relative;background:var(--bg-panel);border:1px solid var(--border);border-radius:8px;overflow:hidden;line-height:0;}
+.canvas-wrap::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(201,168,76,.02) 0%,transparent 70%);pointer-events:none;z-index:1;}
+canvas{display:block;cursor:pointer;width:100%;height:auto;max-width:100%;}
+.bottom-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;flex-wrap:wrap;}
+.btn{font-family:'Cinzel',serif;font-size:11px;letter-spacing:.1em;padding:8px 18px;border:1px solid var(--border-glow);border-radius:5px;background:var(--bg-panel);color:var(--text);cursor:pointer;transition:all .2s;}
+.btn:hover:not(:disabled){border-color:var(--gold);color:var(--gold-light);box-shadow:0 0 10px rgba(201,168,76,.2);}
+.btn:disabled{opacity:.3;cursor:not-allowed;}
+.btn-primary{background:linear-gradient(135deg,#1e2d1a,#162412);border-color:var(--green);color:var(--green);}
+.btn-primary:hover:not(:disabled){background:linear-gradient(135deg,#253620,#1c2e18);box-shadow:0 0 14px rgba(76,175,118,.3);color:#7de0a8;border-color:#7de0a8;}
+.btn-danger{border-color:var(--red);color:var(--red);}
+.btn-danger:hover:not(:disabled){box-shadow:0 0 10px rgba(217,74,74,.25);color:var(--red-light);}
+.btn-bonus{border-color:var(--gold);color:var(--gold);animation:goldPulse 1.5s ease-in-out infinite;}
+.btn-draft{font-size:9px;padding:3px 8px;border-color:#5a8a9a;color:#5a8a9a;}
+.btn-draft.active{border-color:var(--bone);color:var(--bone);background:rgba(212,201,168,.1);box-shadow:0 0 6px rgba(212,201,168,.2);}
+.btn-defense{border-color:#b0a070;color:#b0a070;}
+.btn-defense.active{border-color:var(--gold-light);color:var(--gold-light);background:rgba(201,168,76,.12);box-shadow:0 0 8px rgba(201,168,76,.3);animation:goldPulse 1.8s ease-in-out infinite;}
+.defense-bar{background:linear-gradient(90deg,rgba(201,168,76,.07),rgba(201,168,76,.02));border:1px solid #6a5820;border-radius:5px;padding:7px 12px;display:flex;align-items:center;gap:10px;font-size:11px;color:#b0a060;margin-top:7px;}
+.defense-bar .def-label{font-family:'Cinzel',serif;font-size:10px;letter-spacing:.1em;}
+.defense-bar .def-hint{color:var(--text-dim);font-style:italic;font-size:10px;margin-left:auto;}
+#defenseBar{display:none;}
+@keyframes goldPulse{0%,100%{box-shadow:0 0 6px rgba(201,168,76,.3)}50%{box-shadow:0 0 16px rgba(201,168,76,.7)}}
+.instructions{font-size:10.5px;color:var(--text-dim);display:flex;gap:14px;flex-wrap:wrap;}
+.instruction-item{display:flex;align-items:center;gap:4px;}
+.instruction-key{font-family:'Cinzel',serif;font-size:8.5px;letter-spacing:.05em;padding:2px 5px;border:1px solid var(--border-glow);border-radius:3px;color:var(--gold-dim);white-space:nowrap;}
+#tooltip{position:fixed;background:var(--bg-panel);border:1px solid var(--border-glow);border-radius:5px;padding:7px 10px;font-size:11.5px;color:var(--text);pointer-events:none;z-index:100;display:none;max-width:180px;box-shadow:0 4px 16px rgba(0,0,0,.5);}
+#tooltip .tt-name{font-family:'Cinzel',serif;font-size:9.5px;color:var(--gold);margin-bottom:3px;}
+#tooltip .tt-row{display:flex;justify-content:space-between;gap:10px;color:var(--text-dim);}
+#tooltip .tt-row span{color:var(--text);}
+#tooltip .tt-note{font-size:10px;color:#5b8f54;font-style:italic;margin-top:3px;}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px);}
+.overlay-box{background:var(--bg-panel);border:1px solid var(--border-glow);border-radius:12px;padding:38px 48px;text-align:center;max-width:400px;box-shadow:0 0 60px rgba(0,0,0,.7);}
+.overlay-title{font-family:'Cinzel',serif;font-size:26px;font-weight:900;margin-bottom:7px;}
+.overlay-title.blue{color:var(--bone-light);text-shadow:0 0 20px rgba(212,201,168,.4);}
+.overlay-title.red{color:var(--slate-light);text-shadow:0 0 20px rgba(138,154,168,.4);}
+.overlay-sub{color:var(--text-dim);font-style:italic;font-size:13px;margin-bottom:22px;}
+.overlay-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:26px;}
+.overlay-stat{background:var(--bg-mid);border-radius:5px;padding:9px;}
+.overlay-stat-label{font-size:9px;letter-spacing:.15em;color:var(--text-dim);text-transform:uppercase;margin-bottom:3px;}
+.overlay-stat-value{font-family:'Cinzel',serif;font-size:19px;color:var(--gold);}
+.bonus-bar{background:linear-gradient(90deg,rgba(201,168,76,.08),rgba(201,168,76,.03));border:1px solid var(--gold-dim);border-radius:5px;padding:7px 12px;display:flex;align-items:center;gap:10px;font-size:11px;color:var(--gold);}
+.bonus-bar .bonus-label{font-family:'Cinzel',serif;font-size:10px;letter-spacing:.1em;}
+.bonus-bar .bonus-amount{font-family:'Cinzel',serif;font-size:18px;color:var(--gold-light);font-weight:700;}
+.bonus-bar .bonus-hint{color:var(--text-dim);font-style:italic;font-size:10px;margin-left:auto;}
+#bonusBar{display:none;}
+</style>
 </head>
 <body>
-<div class="container">
-    <h1>Hex Territory Wars - v42</h1>
-
-    <div class="controls">
-        <div class="turn-info">
-            <div class="subtitle" id="turnCount">Turn 1</div>
-            <div class="current-faction" id="currentFaction">Blue Empire</div>
+<div class="wrapper">
+  <header>
+    <h1>⚔ HEX TERRITORY WARS ⚔</h1>
+    <div class="subtitle">a game of conquest &amp; strategy</div>
+  </header>
+  <div class="game-layout">
+    <!-- LEFT -->
+    <div class="panel-left">
+      <div class="panel">
+        <div class="panel-title">Factions</div>
+        <div class="faction-card" id="blueCard">
+          <div class="faction-name blue">Stone Dominion</div>
+          <div class="faction-stat">Territories <span id="blueCount">0</span></div>
+          <div class="faction-stat">Armies      <span id="blueArmies">0</span></div>
+          <div class="faction-stat">Bonus/turn  <span id="blueBonus">0</span></div>
+          <div class="faction-stat">Road pips   <span id="blueRoads">—</span></div>
+          <div class="turn-indicator" id="blueTurnInd" style="display:none">
+            <div class="turn-dot blue"></div><div class="turn-label">Your turn</div>
+          </div>
         </div>
-
-        <button id="endTurnBtn" onclick="endTurn()">End Turn</button>
-
-        <div class="stats">
-            <div class="stat-row">
-                <div class="stat-color" style="background: #3b82f6;"></div>
-                <span id="blueCount">0 territories</span>
-            </div>
-            <div class="stat-row">
-                <div class="stat-color" style="background: #ef4444;"></div>
-                <span id="redCount">0 territories</span>
-            </div>
+        <div class="faction-card" id="redCard">
+          <div class="faction-name red">Iron Pact</div>
+          <div class="faction-stat">Territories <span id="redCount">0</span></div>
+          <div class="faction-stat">Armies      <span id="redArmies">0</span></div>
+          <div class="faction-stat">Bonus/turn  <span id="redBonus">0</span></div>
+          <div class="faction-stat">Road pips   <span id="redRoads">—</span></div>
+          <div class="turn-indicator" id="redTurnInd" style="display:none">
+            <div class="turn-dot red"></div><div class="turn-label">Thinking…</div>
+          </div>
         </div>
+        <div style="margin-top:8px">
+          <div class="panel-title">Moves Left</div>
+          <div class="moves-row" id="movePips"></div>
+          <div style="font-size:10px;color:var(--text-dim);margin-top:3px" id="movesLabel">4 of 4</div>
+        </div>
+        <div class="world-badge" id="worldBadge">🌿 World shifting…</div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Legend</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#1a1c20;border:1px solid #4a5560"></div> Mountain</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#2a1e08;border:1px solid #c8a030"></div> Fortress (+3, pulses)</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#160e24;border:1px solid #9060cf"></div> Village (+2, pulses)</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#0e1a0c;border:1px solid #3d7a35"></div> Forest (drag to clear)</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#2a1208;border:1px solid #b06030"></div> River (major +2, trib +1)</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#1a1408;border:1px solid #8a7040"></div> Road (+1 pip if owned)</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#1a1408;border:1px solid #c09050"></div> Bridge (5t, river free)</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#1a1408;border:1px solid #c0b080"></div> ⛨ Shield (-35% attack)</div>
+      </div>
     </div>
 
-    <canvas id="gameCanvas" width="750" height="550"></canvas>
-
-    <div class="instructions">
-        <p><strong>How to play:</strong></p>
-        <ul>
-            <li><strong>Drag</strong> from your territory to an adjacent hex to attack or reinforce</li>
-            <li><strong>Double-click</strong> a territory to spread armies evenly to all neighbors</li>
-            <li><strong>End Turn</strong> to get bonus (territories + special terrain bonuses)</li>
-            <li><strong>Mountains</strong> (gray) are impassable obstacles</li>
-            <li><strong>Fortresses</strong> (gold) give +3 bonus/turn and grow at 2x speed</li>
-            <li><strong>Villages</strong> (purple) give +2 bonus/turn</li>
-            <li>Control special tiles for strategic advantage!</li>
-        </ul>
+    <!-- CANVAS -->
+    <div>
+      <div class="canvas-wrap">
+        <canvas id="gameCanvas" width="548" height="490"></canvas>
+      </div>
+      <div id="bonusBar" class="bonus-bar" style="margin-top:7px">
+        <div class="bonus-label">BONUS ARMIES</div>
+        <div class="bonus-amount" id="bonusAmount">+0</div>
+        <div class="bonus-hint">Click territory · or auto</div>
+        <button class="btn btn-bonus" onclick="autoDistributeBonus()" style="padding:4px 11px;font-size:9px">Auto</button>
+      </div>
+      <div id="defenseBar" class="defense-bar">
+        <div class="def-label">⛨ DEFENSE PHASE</div>
+        <div class="def-hint">Click tiles to cycle shield facing · End Turn when done</div>
+      </div>
+      <div class="bottom-bar">
+        <div class="instructions">
+          <div class="instruction-item"><span class="instruction-key">Drag</span> attack/reinforce</div>
+          <div class="instruction-item"><span class="instruction-key">Drag→Forest</span> clear</div>
+          <div class="instruction-item"><span class="instruction-key">Dbl-click</span> spread</div>
+          <div class="instruction-item"><span class="instruction-key">Hover</span> info</div>
+        </div>
+        <div style="display:flex;gap:7px;align-items:center">
+          <button class="btn btn-danger" onclick="initGame()" style="font-size:9.5px;padding:6px 12px">New Game</button>
+          <button class="btn btn-defense" id="defenseBtn" onclick="toggleDefensePhase()">⛨ Defend</button>
+          <button class="btn btn-primary" id="endTurnBtn" onclick="endTurn()">End Turn</button>
+        </div>
+      </div>
     </div>
+
+    <!-- RIGHT -->
+    <div class="panel-right">
+      <div class="panel">
+        <div class="panel-title">Round</div>
+        <div class="round-display">
+          <div class="round-num" id="roundNum">1</div>
+          <div class="round-label">of war</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Battle Log</div>
+        <div class="log-scroll" id="battleLog"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Selected Tile</div>
+        <div id="selectedInfo" style="font-size:11px;color:var(--text-dim);font-style:italic">No tile selected</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="tooltip">
+  <div class="tt-name" id="ttName"></div>
+  <div class="tt-row">Owner   <span id="ttOwner"></span></div>
+  <div class="tt-row">Armies  <span id="ttArmies"></span></div>
+  <div class="tt-row">Terrain <span id="ttTerrain"></span></div>
+  <div class="tt-row">Bonus   <span id="ttBonus"></span></div>
+  <div class="tt-note" id="ttNote" style="display:none"></div>
+</div>
+
+<div class="overlay" id="victoryOverlay" style="display:none">
+  <div class="overlay-box">
+    <div class="overlay-title" id="victoryTitle"></div>
+    <div class="overlay-sub"   id="victorySub"></div>
+    <div class="overlay-stats">
+      <div class="overlay-stat"><div class="overlay-stat-label">Rounds</div><div class="overlay-stat-value" id="victoryRounds">0</div></div>
+      <div class="overlay-stat"><div class="overlay-stat-label">Territories</div><div class="overlay-stat-value" id="victoryTerr">0</div></div>
+    </div>
+    <button class="btn btn-primary" onclick="initGame()" style="width:100%;padding:11px">Play Again</button>
+  </div>
 </div>
 
 <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
+// ═══════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════
+const HEX_SIZE=26, COLS=14, ROWS=13, MOVES_PER_TURN=4, MAX_STRENGTH=25;
+const ROAD_TURNS=3, BRIDGE_TURNS=5, ROAD_MAX_PIPS=3;
+const RIVER_MAIN_COST=2, RIVER_TRIB_COST=1;
 
-    const HEX_SIZE = 30;
-    const COLS = 15;
-    const ROWS = 12;
+const FACTIONS={
+  0:{color:'#18191e',borderColor:'#2a2e38',name:'Neutral',       textColor:'#606880'},
+  1:{color:'#2e2c24',borderColor:'#c0b080',name:'Stone Dominion',textColor:'#d4c9a8'},
+  2:{color:'#1c2028',borderColor:'#607080',name:'Iron Pact',     textColor:'#8a9aaa'},
+};
+const TERRAIN={
+  normal:  {name:'Plains',  passable:true, clearable:false,bonus:0,growthRate:1},
+  mountain:{name:'Mountain',passable:false,clearable:false,bonus:0,growthRate:0},
+  fortress:{name:'Fortress',passable:true, clearable:false,bonus:3,growthRate:2},
+  village: {name:'Village', passable:true, clearable:false,bonus:2,growthRate:1},
+  forest:  {name:'Forest',  passable:false,clearable:true, bonus:0,growthRate:0},
+};
 
-    const factions = {
-        0: { color: '#e0e0e0', name: 'Neutral' },
-        1: { color: '#3b82f6', name: 'Blue Empire' },
-        2: { color: '#ef4444', name: 'Red Kingdom' }
-    };
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let state={
+  hexes:[],
+  rivers:new Map(),      // edgeKey -> cost (main=2, trib=1)
+  roads:new Set(),       // edgeKey (built roads)
+  roadProgress:{},       // edgeKey->{faction,turns}
+  roadPipsThisTurn:0,
+  bridges:new Map(),     // edgeKey->{faction,turns,built}
+  draftedSettlements:new Set(), // "q,r" keys
+  // shields: Map of "q,r" -> facing direction 0-5 (null = no shield)
+  shields:new Map(),
+  defensePhase:false,    // true while player is setting shields
+  currentFaction:1,turnCount:1,movesLeft:MOVES_PER_TURN,
+  isAiThinking:false,awaitingBonus:false,bonusAmount:0,
+  dragStart:null,dragCurrentPos:null,hoveredHex:null,
+  lastClickTime:0,lastClickedHex:null,flashEffects:[],
+};
 
-    const terrainTypes = {
-        normal: { color: null, name: 'Normal', passable: true, bonus: 0, growthRate: 1 },
-        mountain: { color: '#64748b', name: 'Mountain', passable: false, bonus: 0, growthRate: 0 },
-        fortress: { color: '#fbbf24', name: 'Fortress', passable: true, bonus: 3, growthRate: 2 },
-        village: { color: '#8b5cf6', name: 'Village', passable: true, bonus: 2, growthRate: 1 }
-    };
+// canonical edge key
+function edgeKey(a,b){
+  const ak=`${a.q},${a.r}`,bk=`${b.q},${b.r}`;
+  return ak<bk?`${ak}|${bk}`:`${bk}|${ak}`;
+}
+function hexFromKey(k){const[q,r]=k.split(',').map(Number);return state.hexes.find(h=>h.q===q&&h.r===r);}
+function pairFromEdge(ek){const[ak,bk]=ek.split('|');return[hexFromKey(ak),hexFromKey(bk)];}
 
-    let hexes = [];
-    let currentFaction = 1;
-    let turnCount = 1;
-    let dragStart = null;
-    let dragCurrent = null;
-    let lastClickTime = 0;
-    let lastClickedHex = null;
-    let isAiThinking = false;
-    let awaitingBonus = false;
-    let bonusAmount = 0;
-    let audioContext = null;
+function hasRiver(a,b){return state.rivers.has(edgeKey(a,b));}
+function riverCost(a,b){return state.rivers.get(edgeKey(a,b))??0;}
+function hasRoad(a,b){return state.roads.has(edgeKey(a,b));}
+function hasBridge(a,b){
+  const br=state.bridges.get(edgeKey(a,b));
+  if(!br||!br.built) return false;
+  // bridge active only if same faction owns both sides
+  return a.owner!==0&&a.owner===b.owner;
+}
+function isDrafted(hex){return state.draftedSettlements.has(`${hex.q},${hex.r}`);}
 
-    function initAudio() {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        document.removeEventListener('click', initAudio);
-        document.removeEventListener('mousedown', initAudio);
-    }
+// Shield helpers
+function getShield(hex){return state.shields.get(`${hex.q},${hex.r}`)??null;}
+function setShield(hex,dir){
+  if(dir===null) state.shields.delete(`${hex.q},${hex.r}`);
+  else state.shields.set(`${hex.q},${hex.r}`,dir);
+}
+// Is attack from srcHex into dstHex hitting dstHex's shield?
+function isShielded(srcHex,dstHex){
+  const facing=getShield(dstHex);
+  if(facing===null||dstHex.owner===0) return false;
+  // Find which direction index srcHex is relative to dstHex
+  const dirs=dstHex.q%2===0?[[1,0],[1,-1],[0,-1],[-1,-1],[-1,0],[0,1]]:[[1,1],[1,0],[0,-1],[-1,0],[-1,1],[0,1]];
+  const idx=dirs.findIndex(([dq,dr])=>dstHex.q+dq===srcHex.q&&dstHex.r+dr===srcHex.r);
+  return idx===facing;
+}
+// Hex vertex position for shield arc drawing
+function hexVertex(cx,cy,i,size){
+  const a=Math.PI/3*i-Math.PI/6;
+  return{x:cx+size*Math.cos(a),y:cy+size*Math.sin(a)};
+}
 
-    document.addEventListener('click', initAudio, { once: true });
-    document.addEventListener('mousedown', initAudio, { once: true });
+// ═══════════════════════════════════════
+// AUDIO
+// ═══════════════════════════════════════
+let audioCtx=null;
+function initAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();}
+document.addEventListener('mousedown',initAudio,{once:true});
+function playSound(type){
+  if(!audioCtx)return;if(audioCtx.state==='suspended')audioCtx.resume();
+  const t=audioCtx.currentTime,o=audioCtx.createOscillator(),g=audioCtx.createGain(),f=audioCtx.createBiquadFilter();
+  o.connect(f);f.connect(g);g.connect(audioCtx.destination);
+  ({
+    select:   ()=>{o.frequency.setValueAtTime(700,t);o.frequency.exponentialRampToValueAtTime(420,t+.06);g.gain.setValueAtTime(.13,t);g.gain.exponentialRampToValueAtTime(.001,t+.1);o.start(t);o.stop(t+.1);},
+    attack:   ()=>{o.type='sawtooth';o.frequency.setValueAtTime(220,t);o.frequency.exponentialRampToValueAtTime(60,t+.18);f.type='lowpass';f.frequency.setValueAtTime(1800,t);f.frequency.exponentialRampToValueAtTime(300,t+.18);g.gain.setValueAtTime(.27,t);g.gain.exponentialRampToValueAtTime(.001,t+.2);o.start(t);o.stop(t+.2);},
+    reinforce:()=>{o.frequency.setValueAtTime(440,t);o.frequency.exponentialRampToValueAtTime(660,t+.1);g.gain.setValueAtTime(.13,t);g.gain.exponentialRampToValueAtTime(.001,t+.18);o.start(t);o.stop(t+.18);},
+    conquest: ()=>{o.type='triangle';[500,620,780].forEach((f2,i)=>o.frequency.setValueAtTime(f2,t+i*.09));g.gain.setValueAtTime(.22,t);g.gain.exponentialRampToValueAtTime(.001,t+.35);o.start(t);o.stop(t+.35);},
+    turn:     ()=>{o.frequency.setValueAtTime(500,t);o.frequency.setValueAtTime(700,t+.08);g.gain.setValueAtTime(.13,t);g.gain.exponentialRampToValueAtTime(.001,t+.22);o.start(t);o.stop(t+.22);},
+    bonus:    ()=>{o.type='sine';o.frequency.setValueAtTime(800,t);o.frequency.exponentialRampToValueAtTime(1200,t+.15);g.gain.setValueAtTime(.11,t);g.gain.exponentialRampToValueAtTime(.001,t+.25);o.start(t);o.stop(t+.25);},
+    clear:    ()=>{o.type='triangle';o.frequency.setValueAtTime(280,t);o.frequency.exponentialRampToValueAtTime(520,t+.14);g.gain.setValueAtTime(.17,t);g.gain.exponentialRampToValueAtTime(.001,t+.24);o.start(t);o.stop(t+.24);},
+    world:    ()=>{o.type='sine';o.frequency.setValueAtTime(240,t);o.frequency.exponentialRampToValueAtTime(170,t+.45);g.gain.setValueAtTime(.06,t);g.gain.exponentialRampToValueAtTime(.001,t+.5);o.start(t);o.stop(t+.5);},
+    roadbuilt:()=>{o.type='triangle';[400,500,650].forEach((f2,i)=>o.frequency.setValueAtTime(f2,t+i*.07));g.gain.setValueAtTime(.14,t);g.gain.exponentialRampToValueAtTime(.001,t+.3);o.start(t);o.stop(t+.3);},
+    bridge:   ()=>{o.type='sine';[350,500,700].forEach((f2,i)=>o.frequency.setValueAtTime(f2,t+i*.1));g.gain.setValueAtTime(.16,t);g.gain.exponentialRampToValueAtTime(.001,t+.4);o.start(t);o.stop(t+.4);},
+    draft:    ()=>{o.frequency.setValueAtTime(600,t);o.frequency.exponentialRampToValueAtTime(900,t+.08);g.gain.setValueAtTime(.1,t);g.gain.exponentialRampToValueAtTime(.001,t+.15);o.start(t);o.stop(t+.15);},
+  }[type]||function(){})();
+}
 
-    function playSound(type) {
-        if (!audioContext) return;
-        if (audioContext.state === 'suspended') audioContext.resume();
+// ═══════════════════════════════════════
+// CANVAS + HEX MATH
+// ═══════════════════════════════════════
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
 
-        const now = audioContext.currentTime;
-        const osc = audioContext.createOscillator();
-        const gain = audioContext.createGain();
-        const filter = audioContext.createBiquadFilter();
+function hexCenter(hex){
+  return{x:hex.q*HEX_SIZE*1.5+38,y:hex.r*HEX_SIZE*Math.sqrt(3)+(hex.q%2)*HEX_SIZE*(Math.sqrt(3)/2)+38};
+}
+function hexPath(cx,cy,size){
+  ctx.beginPath();
+  for(let i=0;i<6;i++){const a=Math.PI/3*i-Math.PI/6;const px=cx+size*Math.cos(a),py=cy+size*Math.sin(a);i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);}
+  ctx.closePath();
+}
+function getNeighbors(hex){
+  const dirs=hex.q%2===0?[[1,0],[1,-1],[0,-1],[-1,-1],[-1,0],[0,1]]:[[1,1],[1,0],[0,-1],[-1,0],[-1,1],[0,1]];
+  return dirs.map(([dq,dr])=>state.hexes.find(h=>h.q===hex.q+dq&&h.r===hex.r+dr)).filter(Boolean);
+}
+function getHexAtPoint(px,py){
+  let best=null,bd=Infinity;
+  state.hexes.forEach(h=>{const{x,y}=hexCenter(h),d=Math.hypot(px-x,py-y);if(d<bd){bd=d;best=h;}});
+  return bd<HEX_SIZE?best:null;
+}
+function hexDist(a,b){return Math.max(Math.abs(a.q-b.q),Math.abs(a.r-b.r),Math.abs((a.q+a.r)-(b.q+b.r)));}
 
-        osc.connect(filter);
-        filter.connect(gain);
-        gain.connect(audioContext.destination);
+function moveCost(src,dst){
+  const base=1;
+  const ek=edgeKey(src,dst);
+  if(state.rivers.has(ek)){
+    // bridge built and active = free crossing
+    const br=state.bridges.get(ek);
+    if(br&&br.built&&src.owner!==0&&src.owner===dst.owner) return base;
+    return base+state.rivers.get(ek);
+  }
+  return base;
+}
 
-        if (type === 'select') {
-            osc.frequency.setValueAtTime(600, now);
-            osc.frequency.exponentialRampToValueAtTime(300, now + 0.05);
-            gain.gain.setValueAtTime(0.3, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-            osc.start(now);
-            osc.stop(now + 0.1);
-        } else if (type === 'attack') {
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(200, now);
-            osc.frequency.exponentialRampToValueAtTime(50, now + 0.2);
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(2000, now);
-            filter.frequency.exponentialRampToValueAtTime(300, now + 0.2);
-            gain.gain.setValueAtTime(0.4, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-            osc.start(now);
-            osc.stop(now + 0.2);
-        } else if (type === 'reinforce') {
-            osc.frequency.setValueAtTime(400, now);
-            osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
-            gain.gain.setValueAtTime(0.25, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-            osc.start(now);
-            osc.stop(now + 0.2);
-        } else if (type === 'turn') {
-            osc.frequency.setValueAtTime(500, now);
-            osc.frequency.setValueAtTime(650, now + 0.06);
-            gain.gain.setValueAtTime(0.2, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
-            osc.start(now);
-            osc.stop(now + 0.25);
-        } else if (type === 'conquest') {
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(500, now);
-            osc.frequency.setValueAtTime(600, now + 0.1);
-            osc.frequency.setValueAtTime(750, now + 0.2);
-            gain.gain.setValueAtTime(0.3, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
-            osc.start(now);
-            osc.stop(now + 0.35);
+function calcBonus(faction){
+  const owned=state.hexes.filter(h=>h.owner===faction&&h.terrain!=='mountain'&&h.terrain!=='forest');
+  return owned.length+owned.reduce((s,h)=>s+TERRAIN[h.terrain].bonus,0);
+}
+
+// ═══════════════════════════════════════
+// RIVER GENERATION — one main + 1-2 tributaries
+// ═══════════════════════════════════════
+function generateRivers(){
+  state.rivers=new Map();
+  // Main river: meanders from left edge to right edge
+  // Pick entry row, walk rightward with random vertical drift
+  let q=0, r=Math.floor(ROWS*0.35+Math.random()*ROWS*0.3);
+  const mainPath=[{q,r}];
+  while(q<COLS-1){
+    // Prefer moving right; occasionally drift up or down
+    const roll=Math.random();
+    if(roll<0.55) q++;          // right
+    else if(roll<0.75&&r>1) r--; // up
+    else if(r<ROWS-2) r++;      // down
+    mainPath.push({q,r});
+    if(mainPath.length>40) break; // safety
+  }
+  // Register main river edges (between consecutive path hexes)
+  for(let i=0;i<mainPath.length-1;i++){
+    const a=mainPath[i],b=mainPath[i+1];
+    const ha=state.hexes.find(h=>h.q===a.q&&h.r===a.r);
+    const hb=state.hexes.find(h=>h.q===b.q&&h.r===b.r);
+    if(ha&&hb&&ha.terrain!=='mountain'&&hb.terrain!=='mountain'){
+      // Register on the shared edges between these hexes (and their immediate neighbors)
+      getNeighbors(ha).filter(n=>getNeighbors(hb).includes(n)||n===hb).forEach(nb=>{
+        if(nb===hb||getNeighbors(hb).includes(ha)){
+          state.rivers.set(edgeKey(ha,hb),RIVER_MAIN_COST);
         }
+      });
+      state.rivers.set(edgeKey(ha,hb),RIVER_MAIN_COST);
     }
+  }
 
-    function initGame() {
-        hexes = [];
-        for (let row = 0; row < ROWS; row++) {
-            for (let col = 0; col < COLS; col++) {
-                const x = col * HEX_SIZE * 1.5;
-                const y = row * HEX_SIZE * Math.sqrt(3) + (col % 2) * HEX_SIZE * Math.sqrt(3) / 2;
+  // 1-2 tributaries branching off the main
+  const numTribs=1+Math.floor(Math.random()*2);
+  for(let t=0;t<numTribs;t++){
+    // Pick a branch point from main path
+    const branchIdx=Math.floor(mainPath.length*0.2+Math.random()*mainPath.length*0.6);
+    let {q:tq,r:tr}={...mainPath[branchIdx]};
+    const dir=Math.random()<0.5?-1:1; // branch up or down
+    const tribLen=3+Math.floor(Math.random()*4);
+    let pq=tq,pr=tr;
+    for(let s=0;s<tribLen;s++){
+      const roll=Math.random();
+      if(roll<0.4) tq+=dir<0?0:1;     // drift right
+      tr+=dir*(roll<0.6?1:0);
+      tr=Math.max(0,Math.min(ROWS-1,tr));
+      tq=Math.max(0,Math.min(COLS-1,tq));
+      const ha=state.hexes.find(h=>h.q===pq&&h.r===pr);
+      const hb=state.hexes.find(h=>h.q===tq&&h.r===tr);
+      if(ha&&hb&&ha!==hb&&ha.terrain!=='mountain'&&hb.terrain!=='mountain'){
+        const ek=edgeKey(ha,hb);
+        if(!state.rivers.has(ek)) state.rivers.set(ek,RIVER_TRIB_COST);
+      }
+      pq=tq;pr=tr;
+    }
+  }
+}
 
-                let owner = 0;
-                let strength = 1;
-                let terrain = 'normal';
+// ═══════════════════════════════════════
+// ROAD + BRIDGE SYSTEM
+// ═══════════════════════════════════════
+function updateRoadsAndBridges(){
+  const settlements=state.hexes.filter(h=>h.terrain==='fortress'||h.terrain==='village');
+  const newRoads=[],newBridges=[];
 
-                const rand = Math.random();
-                if (rand < 0.08) {
-                    terrain = 'mountain';
-                } else if (rand < 0.12) {
-                    terrain = 'fortress';
-                    strength = 5;
-                } else if (rand < 0.18) {
-                    terrain = 'village';
-                    strength = 2;
-                }
+  for(let i=0;i<settlements.length;i++){
+    for(let j=i+1;j<settlements.length;j++){
+      const a=settlements[i],b=settlements[j];
+      if(hexDist(a,b)>5) continue;
+      const ek=edgeKey(a,b);
+      const coOwned=a.owner!==0&&a.owner===b.owner;
+      const roadBuilt=state.roads.has(ek);
 
-                if (col < 3 && row > ROWS - 4 && terrain !== 'mountain') {
-                    owner = 1;
-                    strength = terrain === 'normal' ? Math.floor(Math.random() * 3) + 3 : strength;
-                }
-                if (col > COLS - 4 && row < 3 && terrain !== 'mountain') {
-                    owner = 2;
-                    strength = terrain === 'normal' ? Math.floor(Math.random() * 3) + 3 : strength;
-                }
-
-                hexes.push({ q: col, r: row, x, y, owner, strength, terrain });
+      // ── Road progress ──
+      if(!roadBuilt){
+        if(coOwned){
+          if(!state.roadProgress[ek]||state.roadProgress[ek].faction!==a.owner){
+            state.roadProgress[ek]={faction:a.owner,turns:1};
+          } else {
+            state.roadProgress[ek].turns++;
+            if(state.roadProgress[ek].turns>=ROAD_TURNS){
+              state.roads.add(ek);newRoads.push({ek,faction:a.owner,a,b});
+              delete state.roadProgress[ek];
             }
-        }
-        updateUI();
-        render();
-    }
-
-    function drawHex(x, y, size, color, highlighted, strength, terrain) {
-        ctx.beginPath();
-        for (let i = 0; i < 6; i++) {
-            const angle = Math.PI / 3 * i;
-            const hx = x + size * Math.cos(angle);
-            const hy = y + size * Math.sin(angle);
-            if (i === 0) ctx.moveTo(hx, hy);
-            else ctx.lineTo(hx, hy);
-        }
-        ctx.closePath();
-
-        if (terrainTypes[terrain].color && color === factions[0].color) {
-            ctx.fillStyle = terrainTypes[terrain].color;
+          }
         } else {
-            ctx.fillStyle = color;
+          delete state.roadProgress[ek];
         }
-        ctx.fill();
+      }
 
-        if (terrain === 'mountain') {
-            ctx.fillStyle = 'rgba(71, 85, 105, 0.5)';
-            ctx.fill();
-        } else if (terrain === 'fortress') {
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(x - 8, y + 5);
-            ctx.lineTo(x - 8, y - 3);
-            ctx.lineTo(x, y - 8);
-            ctx.lineTo(x + 8, y - 3);
-            ctx.lineTo(x + 8, y + 5);
-            ctx.closePath();
-            ctx.stroke();
-        } else if (terrain === 'village') {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-            ctx.fillRect(x - 4, y - 2, 8, 6);
-            ctx.beginPath();
-            ctx.moveTo(x - 6, y - 2);
-            ctx.lineTo(x, y - 6);
-            ctx.lineTo(x + 6, y - 2);
-            ctx.fill();
+      // ── Bridge progress (only on river crossings, road must exist) ──
+      if(roadBuilt&&state.rivers.has(ek)){
+        let br=state.bridges.get(ek);
+        if(!br){br={faction:0,turns:0,built:false};state.bridges.set(ek,br);}
+        if(!br.built){
+          if(coOwned){
+            if(br.faction!==a.owner){br.faction=a.owner;br.turns=1;}
+            else{br.turns++;}
+            if(br.turns>=BRIDGE_TURNS){br.built=true;newBridges.push({ek,faction:a.owner,a,b});}
+          }
+          // If not co-owned: freeze (don't reset turns)
         }
-
-        if (highlighted) {
-            ctx.strokeStyle = '#fbbf24';
-            ctx.lineWidth = 3;
-        } else {
-            ctx.strokeStyle = '#666';
-            ctx.lineWidth = 1;
-        }
-        ctx.stroke();
-
-        if (strength > 0 && terrain !== 'mountain') {
-            const displayStrength = Math.min(strength, 999);
-            ctx.fillStyle = terrain === 'fortress' || terrain === 'village' ? '#fff' : '#000';
-            ctx.font = strength > 99 ? 'bold 11px sans-serif' : 'bold 14px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(displayStrength, x, y + 8);
-        }
+      }
     }
+  }
+  return{newRoads,newBridges};
+}
 
-    function render() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+function countRoadPips(faction){
+  let n=0;
+  state.roads.forEach(ek=>{
+    const[ha,hb]=pairFromEdge(ek);
+    if(ha&&hb&&ha.owner===faction&&hb.owner===faction)n++;
+  });
+  return Math.min(n,ROAD_MAX_PIPS);
+}
 
-        hexes.forEach(hex => {
-            const highlighted = (dragStart && hex === dragStart) ||
-                (awaitingBonus && hex.owner === currentFaction && hex.terrain !== 'mountain');
-            drawHex(hex.x + 40, hex.y + 40, HEX_SIZE,
-                factions[hex.owner].color, highlighted, hex.strength, hex.terrain);
-        });
+// ═══════════════════════════════════════
+// DRAFT SYSTEM
+// Drafted settlements pull 1 army/turn from
+// their strongest road-connected owned tile (strength>2)
+// ═══════════════════════════════════════
+function runDraftPhase(faction){
+  // Build adjacency of road-connected owned tiles for this faction
+  const ownedSettlements=state.hexes.filter(h=>
+    (h.terrain==='fortress'||h.terrain==='village')&&
+    h.owner===faction&&isDrafted(h)
+  );
+  if(!ownedSettlements.length) return;
 
-        if (dragStart && dragCurrent) {
-            ctx.strokeStyle = '#fbbf24';
-            ctx.lineWidth = 4;
-            ctx.setLineDash([5, 5]);
-            ctx.beginPath();
-            ctx.moveTo(dragStart.x + 40, dragStart.y + 40);
-            ctx.lineTo(dragCurrent.x, dragCurrent.y);
-            ctx.stroke();
-            ctx.setLineDash([]);
+  // For each drafted settlement, find the nearest owned road-connected tile with surplus
+  let totalDrafted=0;
+  const hexMap=new Map(state.hexes.map(h=>[`${h.q},${h.r}`,h]));
 
-            const angle = Math.atan2(dragCurrent.y - (dragStart.y + 40),
-                dragCurrent.x - (dragStart.x + 40));
-            ctx.fillStyle = '#fbbf24';
-            ctx.beginPath();
-            ctx.moveTo(dragCurrent.x, dragCurrent.y);
-            ctx.lineTo(dragCurrent.x - 15 * Math.cos(angle - Math.PI / 6),
-                dragCurrent.y - 15 * Math.sin(angle - Math.PI / 6));
-            ctx.lineTo(dragCurrent.x - 15 * Math.cos(angle + Math.PI / 6),
-                dragCurrent.y - 15 * Math.sin(angle + Math.PI / 6));
-            ctx.closePath();
-            ctx.fill();
-        }
-
-        if (awaitingBonus && currentFaction === 1) {
-            ctx.fillStyle = 'rgba(251, 191, 36, 0.9)';
-            ctx.strokeStyle = '#000';
-            ctx.lineWidth = 2;
-            ctx.font = 'bold 20px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            const text = `Click a territory to add +${bonusAmount} bonus!`;
-            const textWidth = ctx.measureText(text).width;
-            ctx.fillRect(375 - textWidth / 2 - 10, 20, textWidth + 20, 40);
-            ctx.strokeRect(375 - textWidth / 2 - 10, 20, textWidth + 20, 40);
-            ctx.fillStyle = '#000';
-            ctx.fillText(text, 375, 40);
-        }
+  // Build a graph of road-connected owned tiles
+  const roadGraph=new Map(); // hex key -> [neighbor keys]
+  state.roads.forEach(ek=>{
+    const[ha,hb]=pairFromEdge(ek);
+    if(!ha||!hb) return;
+    if(ha.owner===faction&&hb.owner===faction&&ha.terrain!=='mountain'&&hb.terrain!=='mountain'){
+      const ka=`${ha.q},${ha.r}`,kb=`${hb.q},${hb.r}`;
+      if(!roadGraph.has(ka))roadGraph.set(ka,[]);
+      if(!roadGraph.has(kb))roadGraph.set(kb,[]);
+      roadGraph.get(ka).push(kb);
+      roadGraph.get(kb).push(ka);
     }
+  });
 
-    function getHexAtPoint(x, y) {
-        return hexes.find(hex => {
-            const dx = x - (hex.x + 40);
-            const dy = y - (hex.y + 40);
-            return Math.sqrt(dx * dx + dy * dy) < HEX_SIZE;
-        });
+  const deltas=new Map(); // hex key -> strength delta
+
+  ownedSettlements.forEach(settlement=>{
+    const sk=`${settlement.q},${settlement.r}`;
+    // BFS along road graph from settlement to find nearest surplus tile
+    const visited=new Set([sk]);
+    const queue=[sk];
+    let donor=null;
+    while(queue.length&&!donor){
+      const cur=queue.shift();
+      const h=hexMap.get(cur);
+      if(h&&h!==settlement&&(h.strength-(deltas.get(cur)||0))>2){
+        donor=cur; break;
+      }
+      (roadGraph.get(cur)||[]).forEach(nb=>{if(!visited.has(nb)){visited.add(nb);queue.push(nb);}});
     }
-
-    function getNeighbors(hex) {
-        const neighbors = [];
-        const offsets = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, -1], [-1, 1]];
-
-        offsets.forEach(([dq, dr]) => {
-            const neighbor = hexes.find(h => h.q === hex.q + dq && h.r === hex.r + dr);
-            if (neighbor) neighbors.push(neighbor);
-        });
-
-        return neighbors;
+    if(donor){
+      deltas.set(donor,(deltas.get(donor)||0)-1);
+      deltas.set(sk,(deltas.get(sk)||0)+1);
+      totalDrafted++;
     }
+  });
 
-    function updateUI() {
-        document.getElementById('turnCount').textContent = `Turn ${turnCount}`;
-        document.getElementById('currentFaction').textContent = factions[currentFaction].name;
-        document.getElementById('currentFaction').style.color = factions[currentFaction].color;
-
-        const blueCount = hexes.filter(h => h.owner === 1 && h.terrain !== 'mountain').length;
-        const redCount = hexes.filter(h => h.owner === 2 && h.terrain !== 'mountain').length;
-        document.getElementById('blueCount').textContent = `${blueCount} territories`;
-        document.getElementById('redCount').textContent = `${redCount} territories`;
-
-        const btn = document.getElementById('endTurnBtn');
-        btn.disabled = currentFaction !== 1 || isAiThinking || awaitingBonus;
-        btn.textContent = awaitingBonus ? 'Place Bonus...' : 'End Turn';
-    }
-
-    function handlePropagate(sourceHex) {
-        if (!sourceHex || sourceHex.owner !== currentFaction || sourceHex.strength <= 1 || sourceHex.terrain === 'mountain') return;
-
-        const neighbors = getNeighbors(sourceHex).filter(n => n.terrain !== 'mountain');
-        if (neighbors.length === 0) return;
-
-        const totalToDistribute = sourceHex.strength - 1;
-        const perNeighbor = Math.floor(totalToDistribute / neighbors.length);
-
-        if (perNeighbor === 0) return;
-
-        playSound('reinforce');
-
-        hexes = hexes.map(h => {
-            if (h === sourceHex) {
-                return { ...h, strength: 1 };
-            }
-            if (neighbors.includes(h)) {
-                if (h.owner === currentFaction) {
-                    return { ...h, strength: h.strength + perNeighbor };
-                } else {
-                    const attackStrength = perNeighbor;
-                    const defenseStrength = h.strength;
-
-                    if (attackStrength > defenseStrength) {
-                        setTimeout(() => playSound('conquest'), 100);
-                        return { ...h, owner: currentFaction, strength: attackStrength - defenseStrength };
-                    } else if (attackStrength === defenseStrength) {
-                        return { ...h, owner: 0, strength: 1 };
-                    } else {
-                        return { ...h, strength: defenseStrength - attackStrength };
-                    }
-                }
-            }
-            return h;
-        });
-
-        updateUI();
-        render();
-        setTimeout(() => endTurn(), 100);
-    }
-
-    function endTurn() {
-        if (currentFaction === 1) {
-            const playerTerritories = hexes.filter(h => h.owner === 1 && h.terrain !== 'mountain');
-            const territoryCount = playerTerritories.length;
-            const terrainBonus = playerTerritories.reduce((sum, hex) =>
-                sum + terrainTypes[hex.terrain].bonus, 0);
-
-            if (territoryCount > 0 && !awaitingBonus) {
-                bonusAmount = territoryCount + terrainBonus;
-                awaitingBonus = true;
-                playSound('turn');
-                updateUI();
-                render();
-                return;
-            }
-        }
-
-        completeTurn();
-    }
-
-    function completeTurn() {
-        playSound('turn');
-
-        hexes = hexes.map(hex => {
-            if (hex.owner !== 0 && hex.strength < 20 && hex.terrain !== 'mountain') {
-                const growthRate = terrainTypes[hex.terrain].growthRate;
-                return { ...hex, strength: Math.min(hex.strength + growthRate, 20) };
-            }
-            return hex;
-        });
-
-        currentFaction = currentFaction === 1 ? 2 : 1;
-        if (currentFaction === 1) turnCount++;
-
-        awaitingBonus = false;
-        bonusAmount = 0;
-        dragStart = null;
-        dragCurrent = null;
-
-        updateUI();
-        render();
-
-        if (currentFaction === 2) {
-            setTimeout(aiTurn, 1000);
-        }
-    }
-
-    function aiTurn() {
-        isAiThinking = true;
-        updateUI();
-
-        const aiHexes = hexes.filter(h => h.owner === 2 && h.strength > 1 && h.terrain !== 'mountain');
-        if (aiHexes.length === 0) {
-            aiBonus();
-            return;
-        }
-
-        const attackCount = Math.min(Math.floor(aiHexes.length / 3) + 1, 5);
-        let updatedHexes = [...hexes];
-
-        for (let attack = 0; attack < attackCount; attack++) {
-            const validAttackers = updatedHexes.filter(h => h.owner === 2 && h.strength > 2 && h.terrain !== 'mountain');
-            if (validAttackers.length === 0) break;
-
-            const sortedHexes = [...validAttackers].sort((a, b) => {
-                const aValue = b.strength + (b.terrain === 'fortress' ? 10 : b.terrain === 'village' ? 5 : 0);
-                const bValue = a.strength + (a.terrain === 'fortress' ? 10 : a.terrain === 'village' ? 5 : 0);
-                return aValue - bValue;
-            });
-
-            let attackMade = false;
-
-            for (const attackingHex of sortedHexes) {
-                const neighbors = getNeighbors(attackingHex);
-                const targets = neighbors.filter(n => n.owner !== 2 && n.terrain !== 'mountain');
-
-                if (targets.length > 0) {
-                    const target = targets.sort((a, b) => {
-                        const aValue = (a.terrain === 'fortress' ? 100 : a.terrain === 'village' ? 50 : 0) - a.strength;
-                        const bValue = (b.terrain === 'fortress' ? 100 : b.terrain === 'village' ? 50 : 0) - b.strength;
-                        return bValue - aValue;
-                    })[0];
-
-                    if (attack === 0) playSound('attack');
-
-                    updatedHexes = updatedHexes.map(h => {
-                        if (h.q === target.q && h.r === target.r) {
-                            const attackStrength = attackingHex.strength - 1;
-                            const defenseStrength = target.strength;
-
-                            if (attackStrength > defenseStrength) {
-                                if (attack === 0) setTimeout(() => playSound('conquest'), 100);
-                                return { ...h, owner: 2, strength: attackStrength - defenseStrength };
-                            } else {
-                                return { ...h, strength: defenseStrength - attackStrength };
-                            }
-                        }
-                        if (h.q === attackingHex.q && h.r === attackingHex.r) {
-                            return { ...h, strength: 1 };
-                        }
-                        return h;
-                    });
-
-                    attackMade = true;
-                    break;
-                }
-            }
-
-            if (!attackMade) break;
-        }
-
-        hexes = updatedHexes;
-        render();
-        setTimeout(aiBonus, 500);
-    }
-
-    function aiBonus() {
-        const aiTerritories = hexes.filter(h => h.owner === 2 && h.terrain !== 'mountain');
-        const territoryCount = aiTerritories.length;
-        const terrainBonus = aiTerritories.reduce((sum, hex) =>
-            sum + terrainTypes[hex.terrain].bonus, 0);
-        const bonus = territoryCount + terrainBonus;
-
-        if (bonus > 0 && aiTerritories.length > 0) {
-            const strongest = aiTerritories.sort((a, b) => {
-                const aValue = b.strength + (b.terrain === 'fortress' ? 20 : b.terrain === 'village' ? 10 : 0);
-                const bValue = a.strength + (a.terrain === 'fortress' ? 20 : a.terrain === 'village' ? 10 : 0);
-                return aValue - bValue;
-            })[0];
-
-            hexes = hexes.map(h => {
-                if (h.q === strongest.q && h.r === strongest.r) {
-                    return { ...h, strength: h.strength + bonus };
-                }
-                return h;
-            });
-            render();
-        }
-
-        setTimeout(() => {
-            isAiThinking = false;
-            completeTurn();
-        }, 300);
-    }
-
-    canvas.addEventListener('mousedown', (e) => {
-        if (currentFaction !== 1 || isAiThinking) return;
-
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        const clickedHex = getHexAtPoint(x, y);
-
-        if (awaitingBonus && clickedHex && clickedHex.owner === currentFaction && clickedHex.terrain !== 'mountain') {
-            playSound('conquest');
-            hexes = hexes.map(h => {
-                if (h === clickedHex) {
-                    return { ...h, strength: h.strength + bonusAmount };
-                }
-                return h;
-            });
-            completeTurn();
-            return;
-        }
-
-        if (awaitingBonus) return;
-
-        const now = Date.now();
-        if (clickedHex && lastClickedHex === clickedHex && now - lastClickTime < 400) {
-            handlePropagate(clickedHex);
-            lastClickTime = 0;
-            lastClickedHex = null;
-            return;
-        }
-
-        lastClickTime = now;
-        lastClickedHex = clickedHex;
-
-        if (clickedHex && clickedHex.owner === currentFaction && clickedHex.strength > 1 && clickedHex.terrain !== 'mountain') {
-            dragStart = clickedHex;
-            dragCurrent = { x, y };
-            playSound('select');
-            render();
-        }
+  if(totalDrafted>0){
+    state.hexes=state.hexes.map(h=>{
+      const k=`${h.q},${h.r}`;
+      if(!deltas.has(k)) return h;
+      return{...h,strength:Math.max(1,Math.min(MAX_STRENGTH,h.strength+deltas.get(k)))};
     });
+    if(faction===1) addLog(`Draft: ${totalDrafted} settlement${totalDrafted>1?'s':''}  pulled armies via roads`,'draft');
+  }
+}
 
-    canvas.addEventListener('mousemove', (e) => {
-        if (dragStart) {
-            const rect = canvas.getBoundingClientRect();
-            dragCurrent = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-            render();
-        }
+// ═══════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════
+function render(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const now=performance.now();
+  const validTargets=new Set();
+  if(state.dragStart) getNeighbors(state.dragStart).filter(n=>n.terrain!=='mountain').forEach(n=>validTargets.add(n));
+
+  state.hexes.forEach(hex=>{
+    const{x,y}=hexCenter(hex),fac=FACTIONS[hex.owner];
+    const isDragSrc=state.dragStart===hex,isHovered=state.hoveredHex===hex;
+    const isTarget=validTargets.has(hex);
+    const isBonusTgt=state.awaitingBonus&&hex.owner===state.currentFaction&&hex.terrain!=='mountain'&&hex.terrain!=='forest';
+    const isDefTarget=state.defensePhase&&hex.owner===state.currentFaction&&hex.terrain!=='mountain'&&hex.terrain!=='forest';
+
+    // Base fill
+    let fill=fac.color;
+    if(hex.terrain==='mountain') fill='#191c22';
+    else if(hex.terrain==='forest') fill='#0d1a0b';
+    else if(hex.terrain==='fortress'&&hex.owner===0) fill='#241a06';
+    else if(hex.terrain==='village'&&hex.owner===0) fill='#160d22';
+
+    // Breathing glow for fortress, village, and high-value tiles
+    const isHighValue=(hex.terrain==='fortress'||hex.terrain==='village'||(hex.strength>=15&&hex.owner!==0));
+    const pulseAlpha=isHighValue?0.18+0.12*Math.sin(now/900+hex.q*0.7+hex.r*0.5):0;
+
+    ctx.shadowColor='transparent';ctx.shadowBlur=0;
+    if(isDragSrc){ctx.shadowColor='#e8c97a';ctx.shadowBlur=18;}
+    else if(isDefTarget){ctx.shadowColor='#c0b070';ctx.shadowBlur=8;}
+    else if(isTarget&&!state.awaitingBonus&&!state.defensePhase){
+      if(hex.terrain==='forest'){ctx.shadowColor='#7dbf70';ctx.shadowBlur=10;}
+      else if(hex.owner===state.currentFaction){ctx.shadowColor='#4caf76';ctx.shadowBlur=9;}
+      else{ctx.shadowColor='#c04830';ctx.shadowBlur=9;}
+    }
+    else if(isBonusTgt){ctx.shadowColor='#e8c97a';ctx.shadowBlur=7;}
+    else if(isHighValue){
+      const glowColor=hex.terrain==='fortress'?'#c8a030':hex.terrain==='village'?'#9060cf':'#c0b080';
+      ctx.shadowColor=glowColor;ctx.shadowBlur=8+6*Math.sin(now/900+hex.q*0.7+hex.r*0.5);
+    }
+
+    hexPath(x,y,HEX_SIZE-1);ctx.fillStyle=fill;ctx.fill();
+
+    // Pulsing inner glow overlay
+    if(isHighValue&&pulseAlpha>0){
+      const glowColor=hex.terrain==='fortress'?`rgba(200,160,48,${pulseAlpha})`:hex.terrain==='village'?`rgba(144,96,207,${pulseAlpha})`:`rgba(192,176,128,${pulseAlpha})`;
+      hexPath(x,y,HEX_SIZE-1);ctx.fillStyle=glowColor;ctx.fill();
+    }
+
+    // Border
+    hexPath(x,y,HEX_SIZE-1);
+    if(isDragSrc){ctx.strokeStyle='#e8c97a';ctx.lineWidth=2.5;}
+    else if(isHovered&&!state.defensePhase){ctx.strokeStyle='#c8cdd8';ctx.lineWidth=1.5;}
+    else if(isDefTarget&&isHovered){ctx.strokeStyle='#c8b060';ctx.lineWidth=1.8;}
+    else if(isTarget&&!state.awaitingBonus&&!state.defensePhase){
+      ctx.strokeStyle=hex.terrain==='forest'?'#7dbf70':hex.owner===state.currentFaction?'#4caf76':'#c04830';
+      ctx.lineWidth=1.5;
+    }
+    else{ctx.strokeStyle=fac.borderColor;ctx.lineWidth=0.8;}
+    ctx.stroke();ctx.shadowBlur=0;
+
+    // Owned tint
+    if(hex.owner!==0&&hex.terrain!=='mountain'&&hex.terrain!=='forest'){
+      hexPath(x,y,HEX_SIZE*0.55);
+      ctx.fillStyle=hex.owner===1?'rgba(192,176,128,0.08)':'rgba(90,104,120,0.1)';ctx.fill();
+    }
+
+    drawTerrainIcon(hex,x,y);
+
+    // Strength number — positioned near top of hex, road passes through center
+    if(hex.terrain!=='mountain'&&hex.terrain!=='forest'&&hex.strength>0){
+      ctx.shadowBlur=0;
+      const sz=hex.strength>=100?8:hex.strength>=10?10:12;
+      ctx.font=`bold ${sz}px 'Cinzel',serif`;
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillStyle=hex.owner===0?'#606880':fac.textColor;
+      // y offset: top third of hex, above icon area
+      const yOff=hex.terrain==='normal'?-HEX_SIZE*0.45:-HEX_SIZE*0.32;
+      ctx.fillText(Math.min(hex.strength,999),x,y+yOff);
+    }
+
+    // Draft indicator
+    if(isDrafted(hex)&&hex.owner!==0){
+      ctx.save();ctx.globalAlpha=0.85;ctx.fillStyle=hex.owner===1?'#d4c9a8':'#8a9aaa';
+      ctx.font='bold 9px sans-serif';ctx.textAlign='right';ctx.textBaseline='top';
+      ctx.fillText('⇑',x+HEX_SIZE*0.72,y-HEX_SIZE*0.72);ctx.restore();
+    }
+
+    // Shield arc on outward hex edge
+    const shieldDir=getShield(hex);
+    if(shieldDir!==null&&hex.owner!==0){
+      const arcColor=hex.owner===1?'#d4c9a8':'#8a9aaa';
+      const v1=hexVertex(x,y,shieldDir,HEX_SIZE-1);
+      const v2=hexVertex(x,y,(shieldDir+1)%6,HEX_SIZE-1);
+      // Midpoint outward bump for arc
+      const midA=Math.PI/3*shieldDir-Math.PI/6+Math.PI/6;
+      const arcR=HEX_SIZE*0.55;
+      ctx.save();
+      ctx.strokeStyle=arcColor;ctx.lineWidth=3;ctx.lineCap='round';
+      ctx.shadowColor=arcColor;ctx.shadowBlur=6;ctx.globalAlpha=0.9;
+      ctx.beginPath();ctx.moveTo(v1.x,v1.y);ctx.lineTo(v2.x,v2.y);ctx.stroke();
+      // Small inward chevron showing direction
+      const mx=(v1.x+v2.x)/2,my=(v1.y+v2.y)/2;
+      const inX=x+(mx-x)*0.55,inY=y+(my-y)*0.55;
+      ctx.lineWidth=1.5;ctx.beginPath();
+      ctx.moveTo(v1.x+(mx-v1.x)*0.3,v1.y+(my-v1.y)*0.3);
+      ctx.lineTo(inX,inY);
+      ctx.lineTo(v2.x+(mx-v2.x)*0.3,v2.y+(my-v2.y)*0.3);
+      ctx.stroke();ctx.restore();
+    }
+
+    // Flash
+    const flash=state.flashEffects.find(f=>f.q===hex.q&&f.r===hex.r);
+    if(flash){
+      const alpha=Math.max(0,.5-(now-flash.born)/500);
+      hexPath(x,y,HEX_SIZE-1);
+      ctx.fillStyle=flash.color+Math.round(alpha*255).toString(16).padStart(2,'0');ctx.fill();
+    }
+  });
+
+  drawRivers();
+  drawRoads();
+
+  // Drag arrow
+  if(state.dragStart&&state.dragCurrentPos){
+    const src=hexCenter(state.dragStart),{x:tx,y:ty}=state.dragCurrentPos;
+    const angle=Math.atan2(ty-src.y,tx-src.x),dist=Math.hypot(tx-src.x,ty-src.y);
+    if(dist>10){
+      ctx.save();ctx.globalAlpha=.85;ctx.strokeStyle='#e8c97a';ctx.lineWidth=2.5;ctx.setLineDash([6,4]);
+      ctx.beginPath();ctx.moveTo(src.x,src.y);ctx.lineTo(tx,ty);ctx.stroke();ctx.setLineDash([]);
+      const hl=11;ctx.fillStyle='#e8c97a';ctx.beginPath();
+      ctx.moveTo(tx,ty);
+      ctx.lineTo(tx-hl*Math.cos(angle-.4),ty-hl*Math.sin(angle-.4));
+      ctx.lineTo(tx-hl*Math.cos(angle+.4),ty-hl*Math.sin(angle+.4));
+      ctx.closePath();ctx.fill();ctx.restore();
+    }
+  }
+  state.flashEffects=state.flashEffects.filter(f=>now-f.born<500);
+}
+
+function drawRivers(){
+  const drawn=new Set();
+  state.rivers.forEach((cost,ek)=>{
+    if(drawn.has(ek)) return;drawn.add(ek);
+    const[ha,hb]=pairFromEdge(ek);if(!ha||!hb) return;
+    const a=hexCenter(ha),b=hexCenter(hb);
+    const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
+    const perp=Math.atan2(b.y-a.y,b.x-a.x)+Math.PI/2;
+    const w=HEX_SIZE*(cost===RIVER_MAIN_COST?.42:.28); // main wider
+    ctx.save();
+    ctx.strokeStyle=cost===RIVER_MAIN_COST?'#8a4820':'#a05828';
+    ctx.lineWidth=cost===RIVER_MAIN_COST?6:4;ctx.lineCap='round';ctx.globalAlpha=.7;
+    ctx.beginPath();
+    ctx.moveTo(mx-Math.cos(perp)*w,my-Math.sin(perp)*w);
+    ctx.lineTo(mx+Math.cos(perp)*w,my+Math.sin(perp)*w);ctx.stroke();
+    ctx.strokeStyle='#d4824a';ctx.lineWidth=1.5;ctx.globalAlpha=.4;
+    ctx.beginPath();
+    ctx.moveTo(mx-Math.cos(perp)*w*.5,my-Math.sin(perp)*w*.5);
+    ctx.lineTo(mx+Math.cos(perp)*w*.5,my+Math.sin(perp)*w*.5);ctx.stroke();
+    ctx.restore();
+  });
+}
+
+function drawRoads(){
+  const drawn=new Set();
+  // Draw built roads
+  state.roads.forEach(ek=>{
+    if(drawn.has(ek))return;drawn.add(ek);
+    const[ha,hb]=pairFromEdge(ek);if(!ha||!hb)return;
+    const a=hexCenter(ha),b=hexCenter(hb);
+    const bothBlue=ha.owner===1&&hb.owner===1;
+    const bothRed=ha.owner===2&&hb.owner===2;
+    const active=bothBlue||bothRed;
+    const col=bothBlue?'#7ab8f5':bothRed?'#f57a7a':'#8a7040';
+    const alpha=active?.75:.28;
+    ctx.save();ctx.globalAlpha=alpha;ctx.strokeStyle=col;
+    ctx.lineWidth=2;ctx.lineCap='round';ctx.setLineDash([5,4]);
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+    ctx.setLineDash([]);
+    // Bridge overlay
+    const br=state.bridges.get(ek);
+    if(br){
+      const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
+      const perp=Math.atan2(b.y-a.y,b.x-a.x)+Math.PI/2;
+      const bw=HEX_SIZE*.28;
+      ctx.globalAlpha=br.built?0.9:0.4;
+      ctx.strokeStyle=br.built?'#e0b060':'#907030';
+      ctx.lineWidth=br.built?3:1.5;ctx.setLineDash([]);
+      // Draw arch line across river
+      ctx.beginPath();
+      ctx.moveTo(mx-Math.cos(perp)*bw,my-Math.sin(perp)*bw);
+      ctx.lineTo(mx+Math.cos(perp)*bw,my+Math.sin(perp)*bw);ctx.stroke();
+      // Bracket marks
+      if(br.built){
+        ctx.lineWidth=2;
+        const ang=Math.atan2(b.y-a.y,b.x-a.x);
+        [-bw,bw].forEach(off=>{
+          const px=mx+Math.cos(perp)*off,py=my+Math.sin(perp)*off;
+          ctx.beginPath();
+          ctx.moveTo(px-Math.cos(ang)*4,py-Math.sin(ang)*4);
+          ctx.lineTo(px+Math.cos(ang)*4,py+Math.sin(ang)*4);ctx.stroke();
+        });
+      } else {
+        // Show build progress as small number
+        ctx.globalAlpha=0.7;ctx.fillStyle='#c09050';
+        ctx.font='bold 8px Cinzel,serif';ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillText(`${br.turns}/${BRIDGE_TURNS}`,mx,my-8);
+      }
+    }
+    if(active){
+      ctx.fillStyle=col;ctx.globalAlpha=alpha*.9;
+      [a,b].forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,2.5,0,Math.PI*2);ctx.fill();});
+    }
+    ctx.restore();
+  });
+
+  // Road progress (under construction)
+  Object.entries(state.roadProgress).forEach(([ek,prog])=>{
+    if(state.roads.has(ek)) return;
+    const[ha,hb]=pairFromEdge(ek);if(!ha||!hb)return;
+    const a=hexCenter(ha),b=hexCenter(hb);
+    const frac=prog.turns/ROAD_TURNS;
+    const mx=a.x+(b.x-a.x)*frac,my=a.y+(b.y-a.y)*frac;
+    ctx.save();ctx.globalAlpha=.35;
+    ctx.strokeStyle=prog.faction===1?'#7ab8f5':'#f57a7a';
+    ctx.lineWidth=1.5;ctx.lineCap='round';ctx.setLineDash([3,5]);
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(mx,my);ctx.stroke();
+    ctx.setLineDash([]);ctx.restore();
+  });
+}
+
+function drawTerrainIcon(hex,cx,cy){
+  const t=hex.terrain;
+  if(t==='mountain'){
+    ctx.strokeStyle='#4a6070';ctx.lineWidth=1.4;
+    ctx.beginPath();ctx.moveTo(cx-9,cy+5);ctx.lineTo(cx,cy-7);ctx.lineTo(cx+9,cy+5);
+    ctx.moveTo(cx+2,cy+5);ctx.lineTo(cx+10,cy-3);ctx.lineTo(cx+17,cy+5);ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.4)';
+    ctx.beginPath();ctx.moveTo(cx,cy-7);ctx.lineTo(cx-3,cy-1);ctx.lineTo(cx+3,cy-1);ctx.closePath();ctx.fill();
+  } else if(t==='forest'){
+    const dt=(ox,oy,s)=>{
+      ctx.fillStyle='#2d6a25';
+      ctx.beginPath();ctx.moveTo(ox,oy-s*1.4);ctx.lineTo(ox-s,oy);ctx.lineTo(ox+s,oy);ctx.closePath();ctx.fill();
+      ctx.beginPath();ctx.moveTo(ox,oy-s*2);ctx.lineTo(ox-s*.7,oy-s*.5);ctx.lineTo(ox+s*.7,oy-s*.5);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#1e4d18';ctx.fillRect(ox-s*.18,oy,s*.36,s*.6);
+    };
+    dt(cx-5,cy+4,5);dt(cx+5,cy+4,4.5);
+  } else if(t==='fortress'){
+    ctx.strokeStyle='#b8962a';ctx.lineWidth=1.1;ctx.fillStyle='rgba(184,150,42,.12)';
+    const fw=9,fh=8;
+    ctx.beginPath();ctx.rect(cx-fw/2,cy-fh-2,fw,fh);ctx.fill();ctx.stroke();
+    for(let i=0;i<3;i++){ctx.beginPath();ctx.rect(cx-fw/2+i*3.4,cy-fh-5,2.1,3);ctx.fill();ctx.stroke();}
+    ctx.beginPath();ctx.arc(cx,cy-2,2,Math.PI,0);ctx.lineTo(cx+2,cy-2);ctx.lineTo(cx-2,cy-2);ctx.stroke();
+  } else if(t==='village'){
+    ctx.strokeStyle='#7c5cbf';ctx.lineWidth=1.1;ctx.fillStyle='rgba(124,92,191,.12)';
+    ctx.beginPath();ctx.rect(cx-7,cy-3,14,8);ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx-9,cy-3);ctx.lineTo(cx,cy-10);ctx.lineTo(cx+9,cy-3);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle='rgba(124,92,191,.35)';ctx.beginPath();ctx.rect(cx-2.5,cy-.5,5,5);ctx.fill();
+  }
+}
+
+function addFlash(hex,col){
+  state.flashEffects=state.flashEffects.filter(f=>!(f.q===hex.q&&f.r===hex.r));
+  state.flashEffects.push({q:hex.q,r:hex.r,color:col,born:performance.now()});
+}
+
+// ═══════════════════════════════════════
+// COMBAT
+// ═══════════════════════════════════════
+function resolveCombat(att,def,atkStr,shielded=false){
+  if(def.owner===att.owner) return{newOwner:att.owner,newStr:def.strength+atkStr};
+  // Shield reduces attacker's effective strength by 35%
+  const effAtk=shielded?Math.floor(atkStr*0.65):atkStr;
+  if(effAtk>def.strength)   return{newOwner:att.owner,newStr:effAtk-def.strength,conquered:true,shielded};
+  if(effAtk===def.strength) return{newOwner:0,newStr:1,contested:true,shielded};
+  return{newOwner:def.owner,newStr:def.strength-effAtk,shielded};
+}
+
+function executeMove(src,dst){
+  if(!src||!dst||src===dst) return 0;
+  if(src.owner!==state.currentFaction) return 0;
+  if(src.strength<=1) return 0;
+  if(dst.terrain==='mountain') return 0;
+  if(!getNeighbors(src).includes(dst)) return 0;
+
+  if(dst.terrain==='forest'){
+    if(src.strength<=2) return 0;
+    playSound('clear');addFlash(dst,'#3d9630');
+    addLog(`Forest cleared at (${dst.q},${dst.r})`,'forest');
+    state.hexes=state.hexes.map(h=>{
+      if(h===dst)return{...h,terrain:'normal',owner:state.currentFaction,strength:Math.max(1,src.strength-2)};
+      if(h===src)return{...h,strength:1};return h;
     });
+    return moveCost(src,dst);
+  }
 
-    canvas.addEventListener('mouseup', (e) => {
-        if (!dragStart) return;
+  const atkStr=src.strength-1;
+  const shielded=isShielded(src,dst);
+  const result=resolveCombat(src,dst,atkStr,shielded);
+  const isAttack=dst.owner!==state.currentFaction;
 
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+  playSound(isAttack?'attack':'reinforce');
+  if(result.conquered){
+    setTimeout(()=>playSound('conquest'),80);
+    addFlash(dst,'#e8c060');
+    // Shield breaks when tile is captured
+    setShield(dst,null);
+  } else if(isAttack){addFlash(dst,'#903020');}
 
-        const targetHex = getHexAtPoint(x, y);
+  state.hexes=state.hexes.map(h=>{
+    if(h===src)return{...h,strength:1};
+    if(h===dst)return{...h,owner:result.newOwner,strength:Math.max(1,result.newStr)};
+    return h;
+  });
 
-        if (targetHex && targetHex !== dragStart && targetHex.terrain !== 'mountain') {
-            const neighbors = getNeighbors(dragStart);
+  const label=state.currentFaction===1?'Stone':'Iron';
+  const shieldNote=shielded?' (shield reduced attack)':'';
+  if(result.conquered)      addLog(`${label} captured (${dst.q},${dst.r})${shieldNote}`,state.currentFaction===1?'blue':'red');
+  else if(result.contested) addLog(`Stalemate at (${dst.q},${dst.r})${shieldNote}`,'');
+  else if(isAttack)         addLog(`Attack repelled at (${dst.q},${dst.r})${shieldNote}`,state.currentFaction===1?'red':'blue');
+  else                      addLog(`Reinforced (${dst.q},${dst.r}) +${atkStr}`,state.currentFaction===1?'blue':'red');
 
-            if (neighbors.includes(targetHex)) {
-                if (targetHex.owner !== currentFaction) {
-                    playSound('attack');
-                    hexes = hexes.map(h => {
-                        if (h === targetHex) {
-                            const attackStrength = dragStart.strength - 1;
-                            const defenseStrength = targetHex.strength;
+  return moveCost(src,dst);
+}
 
-                            if (attackStrength > defenseStrength) {
-                                playSound('conquest');
-                                return { ...h, owner: currentFaction, strength: attackStrength - defenseStrength };
-                            } else {
-                                return { ...h, strength: defenseStrength - attackStrength };
-                            }
-                        }
-                        if (h === dragStart) {
-                            return { ...h, strength: 1 };
-                        }
-                        return h;
-                    });
-                } else {
-                    playSound('reinforce');
-                    hexes = hexes.map(h => {
-                        if (h === targetHex) {
-                            return { ...h, strength: h.strength + dragStart.strength - 1 };
-                        }
-                        if (h === dragStart) {
-                            return { ...h, strength: 1 };
-                        }
-                        return h;
-                    });
-                }
+function handlePropagate(hex){
+  if(!hex||hex.owner!==state.currentFaction||hex.strength<=1||hex.terrain==='mountain'||hex.terrain==='forest')return;
+  const nbs=getNeighbors(hex).filter(n=>n.terrain!=='mountain'&&n.terrain!=='forest');
+  if(!nbs.length)return;
+  const total=hex.strength-1,per=Math.floor(total/nbs.length);
+  if(per<1)return;
+  playSound('reinforce');let conquests=0;
+  state.hexes=state.hexes.map(h=>{
+    if(h===hex)return{...h,strength:1};
+    if(nbs.includes(h)){const r=resolveCombat(hex,h,per);if(r.conquered){conquests++;addFlash(h,'#ffd044');}return{...h,owner:r.newOwner,strength:Math.max(1,r.newStr)};}
+    return h;
+  });
+  if(conquests)setTimeout(()=>playSound('conquest'),80);
+  addLog(`Spread from (${hex.q},${hex.r}) to ${nbs.length} tiles`,state.currentFaction===1?'blue':'red');
+  spendMove(2);
+}
 
-                updateUI();
-                render();
-                setTimeout(() => endTurn(), 100);
-            }
-        }
+function spendMove(cost=1){
+  state.movesLeft=Math.max(0,state.movesLeft-cost);
+  updateUI();checkWin();
+  if(state.movesLeft===0)setTimeout(endTurn,140);
+}
 
-        dragStart = null;
-        dragCurrent = null;
-        render();
+// ═══════════════════════════════════════
+// WORLD PHASE
+// ═══════════════════════════════════════
+function runWorldPhase(){
+  const snap=state.hexes.map(h=>({...h}));
+  const strDeltas={},newForests=new Set();
+
+  snap.forEach(hex=>{
+    if(hex.terrain==='mountain'||hex.terrain==='forest'||hex.owner!==0)return;
+    const nbs=getNeighbors(hex).map(n=>snap.find(h=>h.q===n.q&&h.r===n.r));
+    const adjCities=nbs.filter(n=>n&&(n.terrain==='fortress'||n.terrain==='village')).length;
+    const adjOwned=nbs.filter(n=>n&&n.owner!==0).length;
+    const k=`${hex.q},${hex.r}`;
+    if(adjCities>0&&hex.strength<4) strDeltas[k]=(strDeltas[k]||0)+1;
+    if(adjCities===0&&adjOwned===0&&hex.strength>1) strDeltas[k]=(strDeltas[k]||0)-1;
+  });
+
+  snap.filter(h=>h.terrain==='forest').forEach(forest=>{
+    getNeighbors(forest).map(n=>snap.find(h=>h.q===n.q&&h.r===n.r))
+      .filter(n=>n&&n.terrain==='normal'&&n.owner===0)
+      .forEach(n=>{if(Math.random()<.07)newForests.add(`${n.q},${n.r}`);});
+  });
+
+  let fc=0;
+  state.hexes=state.hexes.map(h=>{
+    const k=`${h.q},${h.r}`;
+    if(newForests.has(k)&&h.owner===0&&h.terrain==='normal'){fc++;return{...h,terrain:'forest',strength:0};}
+    if(strDeltas[k]&&h.terrain!=='mountain'&&h.terrain!=='forest'&&h.owner===0)
+      return{...h,strength:Math.max(1,Math.min(4,h.strength+strDeltas[k]))};
+    return h;
+  });
+  if(fc>0){addLog(`Forest spread to ${fc} tile${fc>1?'s':''}…`,'world');playSound('world');}
+}
+
+// ═══════════════════════════════════════
+// TURN FLOW
+// ═══════════════════════════════════════
+function endTurn(){
+  if(state.currentFaction!==1||state.isAiThinking||state.awaitingBonus)return;
+  const bonus=calcBonus(1);
+  if(bonus>0){state.awaitingBonus=true;state.bonusAmount=bonus;playSound('turn');updateUI();return;}
+  completeTurn();
+}
+
+function completeTurn(){
+  playSound('turn');
+  state.hexes=state.hexes.map(h=>{
+    if(h.owner===0||h.terrain==='mountain'||h.terrain==='forest')return h;
+    return{...h,strength:Math.min(h.strength+TERRAIN[h.terrain].growthRate,MAX_STRENGTH)};
+  });
+
+  const wasBlue=state.currentFaction===1;
+  state.currentFaction=wasBlue?2:1;
+  if(state.currentFaction===1){state.turnCount++;runWorldPhase();}
+
+  // Draft pull (for the faction whose turn just ENDED — they get the benefit)
+  runDraftPhase(wasBlue?1:2);
+
+  // Roads + bridges
+  const{newRoads,newBridges}=updateRoadsAndBridges();
+  newRoads.forEach(({faction,a,b})=>{
+    addLog(`Road built: ${a.terrain}↔${b.terrain} (${a.q},${a.r})-(${b.q},${b.r})`,'road');
+    playSound('roadbuilt');
+  });
+  newBridges.forEach(({faction,a,b})=>{
+    addLog(`Bridge complete across river (${a.q},${a.r})-(${b.q},${b.r})`,'road');
+    playSound('bridge');
+  });
+
+  const roadPips=countRoadPips(state.currentFaction);
+  Object.assign(state,{
+    awaitingBonus:false,bonusAmount:0,
+    movesLeft:MOVES_PER_TURN+roadPips,roadPipsThisTurn:roadPips,
+    dragStart:null,dragCurrentPos:null,
+    defensePhase:false,  // always exit defense phase on turn end
+  });
+  updateUI();
+
+  if(state.currentFaction===2){state.isAiThinking=true;updateUI();setTimeout(aiTurn,900);}
+}
+
+// ═══════════════════════════════════════
+// BONUS PLACEMENT
+// ═══════════════════════════════════════
+function placeBonusOnHex(hex){
+  if(!hex||hex.owner!==state.currentFaction||hex.terrain==='mountain'||hex.terrain==='forest')return;
+  playSound('bonus');addFlash(hex,'#ffd044');
+  state.hexes=state.hexes.map(h=>h===hex?{...h,strength:Math.min(h.strength+state.bonusAmount,MAX_STRENGTH)}:h);
+  addLog(`+${state.bonusAmount} bonus at (${hex.q},${hex.r})`,'gold');
+  completeTurn();
+}
+function autoDistributeBonus(){
+  const owned=state.hexes.filter(h=>h.owner===state.currentFaction&&h.terrain!=='mountain'&&h.terrain!=='forest');
+  if(!owned.length)return;
+  const front=owned.filter(h=>getNeighbors(h).some(n=>n.owner!==state.currentFaction&&n.terrain!=='mountain'));
+  const pool=(front.length?front:owned).sort((a,b)=>b.strength-a.strength).slice(0,3);
+  const per=Math.floor(state.bonusAmount/pool.length),rem=state.bonusAmount-per*pool.length;
+  playSound('bonus');let first=true;
+  state.hexes=state.hexes.map(h=>{
+    if(!pool.includes(h))return h;
+    const extra=first?rem:0;first=false;addFlash(h,'#c9a84c');
+    return{...h,strength:Math.min(h.strength+per+extra,MAX_STRENGTH)};
+  });
+  addLog(`Auto-distributed +${state.bonusAmount} to ${pool.length} tiles`,'gold');
+  completeTurn();
+}
+
+// ═══════════════════════════════════════
+// AI
+// ═══════════════════════════════════════
+function aiTurn(){
+  let hexes=[...state.hexes];let movesUsed=0;
+  while(movesUsed<state.movesLeft){
+    const attackers=hexes.filter(h=>h.owner===2&&h.strength>2&&h.terrain!=='mountain'&&h.terrain!=='forest');
+    if(!attackers.length)break;
+    let bestScore=-Infinity,bestSrc=null,bestDst=null;
+    for(const src of attackers){
+      for(const dst of getNeighbors(src).filter(n=>n.owner!==2&&n.terrain!=='mountain')){
+        if(dst.terrain==='forest'){if(src.strength>3&&bestScore<-4)bestScore=-4;continue;}
+        const atkStr=src.strength-1;
+        const tv=dst.terrain==='fortress'?80:dst.terrain==='village'?40:0;
+        const conn=getNeighbors(dst).filter(n=>n.owner===2).length;
+        const feas=atkStr>dst.strength?30:atkStr===dst.strength?5:-12;
+        const rPen=hasRiver(src,dst)&&!hasBridge(src,dst)?-6:0;
+        const score=feas+tv+conn*5-dst.strength+(atkStr-dst.strength)*2+rPen;
+        if(score>bestScore){bestScore=score;bestSrc=src;bestDst=dst;}
+      }
+    }
+    if(!bestSrc||bestScore<-5)break;
+    const atkStr=bestSrc.strength-1,result=resolveCombat(bestSrc,bestDst,atkStr);
+    if(movesUsed===0)playSound('attack');
+    if(result.conquered){addFlash(bestDst,'#cc3333');addLog(`Red captured (${bestDst.q},${bestDst.r})`,'red');}
+    const cost=moveCost(bestSrc,bestDst);
+    hexes=hexes.map(h=>{
+      if(h.q===bestSrc.q&&h.r===bestSrc.r)return{...h,strength:1};
+      if(h.q===bestDst.q&&h.r===bestDst.r)return{...h,owner:result.newOwner,strength:Math.max(1,result.newStr)};
+      return h;
     });
+    movesUsed+=cost;
+  }
+  state.hexes=hexes;updateUI();
+  setTimeout(()=>{
+    const aiOwned=state.hexes.filter(h=>h.owner===2&&h.terrain!=='mountain'&&h.terrain!=='forest');
+    const bonus=calcBonus(2);
+    if(bonus>0&&aiOwned.length){
+      const front=aiOwned.filter(h=>getNeighbors(h).some(n=>n.owner!==2&&n.terrain!=='mountain'));
+      const pool=(front.length?front:aiOwned).sort((a,b)=>b.strength-a.strength).slice(0,3);
+      const per=Math.floor(bonus/pool.length);
+      state.hexes=state.hexes.map(h=>pool.includes(h)?{...h,strength:Math.min(h.strength+per,MAX_STRENGTH)}:h);
+    }
+    state.isAiThinking=false;checkWin();completeTurn();
+  },420);
+}
 
-    initGame();
+// ═══════════════════════════════════════
+// WIN
+// ═══════════════════════════════════════
+function checkWin(){
+  const blue=state.hexes.filter(h=>h.owner===1&&h.terrain!=='mountain'&&h.terrain!=='forest').length;
+  const red=state.hexes.filter(h=>h.owner===2&&h.terrain!=='mountain'&&h.terrain!=='forest').length;
+  if(!blue||!red){
+    const w=blue>0?1:2,f=FACTIONS[w];
+    const total=state.hexes.filter(h=>h.terrain!=='mountain').length;
+    document.getElementById('victoryTitle').textContent=`${f.name} Victorious!`;
+    document.getElementById('victoryTitle').className=`overlay-title ${w===1?'blue':'red'}`;
+    document.getElementById('victorySub').textContent=`conquered the realm in ${state.turnCount} rounds`;
+    document.getElementById('victoryRounds').textContent=state.turnCount;
+    document.getElementById('victoryTerr').textContent=`${w===1?blue:red}/${total}`;
+    document.getElementById('victoryOverlay').style.display='flex';
+  }
+}
+
+// ═══════════════════════════════════════
+// UI
+// ═══════════════════════════════════════
+function updateUI(){
+  document.getElementById('roundNum').textContent=state.turnCount;
+  const blueT=state.hexes.filter(h=>h.owner===1&&h.terrain!=='mountain'&&h.terrain!=='forest');
+  const redT=state.hexes.filter(h=>h.owner===2&&h.terrain!=='mountain'&&h.terrain!=='forest');
+  document.getElementById('blueCount').textContent=blueT.length;
+  document.getElementById('blueArmies').textContent=blueT.reduce((s,h)=>s+h.strength,0);
+  document.getElementById('blueBonus').textContent='+'+calcBonus(1);
+  document.getElementById('blueRoads').textContent=countRoadPips(1)>0?`+${countRoadPips(1)} pip`:'—';
+  document.getElementById('redCount').textContent=redT.length;
+  document.getElementById('redArmies').textContent=redT.reduce((s,h)=>s+h.strength,0);
+  document.getElementById('redBonus').textContent='+'+calcBonus(2);
+  document.getElementById('redRoads').textContent=countRoadPips(2)>0?`+${countRoadPips(2)} pip`:'—';
+
+  const isBlue=state.currentFaction===1;
+  document.getElementById('blueCard').className=`faction-card ${isBlue?'active-blue':'inactive'}`;
+  document.getElementById('redCard').className=`faction-card ${!isBlue?'active-red':'inactive'}`;
+  document.getElementById('blueTurnInd').style.display=isBlue?'flex':'none';
+  document.getElementById('redTurnInd').style.display=!isBlue?'flex':'none';
+  document.getElementById('worldBadge').className=`world-badge${state.isAiThinking?' show':''}`;
+
+  const container=document.getElementById('movePips');container.innerHTML='';
+  const base=MOVES_PER_TURN,rp=state.roadPipsThisTurn||0,total=base+rp;
+  for(let i=0;i<total;i++){
+    const pip=document.createElement('div');
+    const isRoad=i>=base,used=i>=state.movesLeft;
+    pip.className='move-pip'+(used?' used':isRoad?' road':i===state.movesLeft-1?' active':'');
+    if(isRoad)pip.title='Road bonus pip';
+    container.appendChild(pip);
+  }
+  const rn=rp>0?` (+${rp} road)`:'';
+  document.getElementById('movesLabel').textContent=`${state.movesLeft} of ${total} moves${rn}`;
+
+  const bonusBar=document.getElementById('bonusBar');
+  if(state.awaitingBonus&&state.currentFaction===1){
+    bonusBar.style.display='flex';
+    document.getElementById('bonusAmount').textContent='+'+state.bonusAmount;
+  }else bonusBar.style.display='none';
+
+  // Defense phase bar + button
+  const defBar=document.getElementById('defenseBar');
+  const defBtn=document.getElementById('defenseBtn');
+  const canDefend=state.currentFaction===1&&!state.isAiThinking&&!state.awaitingBonus;
+  defBar.style.display=state.defensePhase?'flex':'none';
+  defBtn.disabled=!canDefend;
+  defBtn.className='btn btn-defense'+(state.defensePhase?' active':'');
+  defBtn.textContent=state.defensePhase?'⛨ Done Defending':'⛨ Defend';
+
+  const btn=document.getElementById('endTurnBtn');
+  btn.disabled=!(state.currentFaction===1&&!state.isAiThinking&&!state.awaitingBonus);
+  btn.textContent=state.awaitingBonus?'Place Bonus…':'End Turn';
+  render();
+}
+
+function addLog(text,cls=''){
+  const log=document.getElementById('battleLog');
+  const el=document.createElement('div');el.className=`log-entry ${cls}`;el.textContent=text;
+  log.insertBefore(el,log.firstChild);
+  while(log.children.length>60)log.removeChild(log.lastChild);
+}
+
+// ═══════════════════════════════════════
+// TOOLTIP + SELECTED PANEL
+// ═══════════════════════════════════════
+function showTooltip(hex,sx,sy){
+  const tt=document.getElementById('tooltip'),t=TERRAIN[hex.terrain];
+  document.getElementById('ttName').textContent=t.name;
+  document.getElementById('ttOwner').textContent=FACTIONS[hex.owner].name;
+  document.getElementById('ttArmies').textContent=(hex.terrain==='mountain'||hex.terrain==='forest')?'—':hex.strength;
+  document.getElementById('ttTerrain').textContent=hex.terrain;
+  document.getElementById('ttBonus').textContent=t.bonus>0?`+${t.bonus}/turn`:'—';
+  let note='';
+  if(hex.terrain==='forest') note='Drag armies in to clear';
+  else{
+    const nbs=getNeighbors(hex);
+    const rn=nbs.filter(n=>hasRiver(hex,n));
+    if(rn.length){
+      const mainCount=rn.filter(n=>riverCost(hex,n)===RIVER_MAIN_COST).length;
+      note=mainCount>0?`Major river (+${RIVER_MAIN_COST} move)`:` Tributary (+${RIVER_TRIB_COST} move)`;
+    }
+    if(hex.terrain==='fortress'||hex.terrain==='village'){
+      const roadCount=[...state.roads].filter(ek=>{const[ha,hb]=pairFromEdge(ek);return ha===hex||hb===hex;}).length;
+      if(roadCount) note=(note?note+' · ':'')+`${roadCount} road${roadCount>1?'s':''}`;
+      const inProg=Object.entries(state.roadProgress).filter(([ek])=>{const[ha,hb]=pairFromEdge(ek);return ha===hex||hb===hex;});
+      if(inProg.length) note=(note?note+' · ':'')+`road ${inProg[0][1].turns}/${ROAD_TURNS}`;
+      if(isDrafted(hex)) note=(note?note+' · ':'')+'⇑ Drafting';
+      const sd=getShield(hex);
+      if(sd!==null) note=(note?note+' · ':'')+'⛨ Shielded';
+    }
+  }
+  const noteEl=document.getElementById('ttNote');noteEl.textContent=note;noteEl.style.display=note?'block':'none';
+  tt.style.display='block';tt.style.left=(sx+14)+'px';tt.style.top=(sy-10)+'px';
+}
+function hideTooltip(){document.getElementById('tooltip').style.display='none';}
+
+function updateSelectedInfo(hex){
+  const el=document.getElementById('selectedInfo');
+  if(!hex){el.innerHTML='<span style="font-style:italic">No tile selected</span>';return;}
+  const f=FACTIONS[hex.owner],t=TERRAIN[hex.terrain];
+  const rv=getNeighbors(hex).some(n=>hasRiver(hex,n));
+  const isSettlement=hex.terrain==='fortress'||hex.terrain==='village';
+  const canDraft=isSettlement&&hex.owner===state.currentFaction&&hex.owner!==0;
+  const drafted=isDrafted(hex);
+  const shieldDir=getShield(hex);
+  const DIRNAMES=['NE','N','NW','SW','S','SE'];
+  const shieldInfo=shieldDir!==null&&hex.owner!==0
+    ?`<div style="margin:2px 0;color:#c8b870;font-size:10px">⛨ Shield: ${DIRNAMES[shieldDir]} face</div>`:'';
+  const bridgeInfo=(()=>{
+    const nbs=getNeighbors(hex).filter(n=>hasRiver(hex,n)&&hasRoad(hex,n));
+    if(!nbs.length) return '';
+    const br=state.bridges.get(edgeKey(hex,nbs[0]));
+    if(!br) return '';
+    if(br.built) return `<div style="margin:2px 0;color:#e0b060;font-size:10px">🌉 Bridge built</div>`;
+    return `<div style="margin:2px 0;color:#907030;font-size:10px">Bridge: ${br.turns}/${BRIDGE_TURNS} turns</div>`;
+  })();
+  el.innerHTML=`
+    <div style="color:${f.textColor};font-family:'Cinzel',serif;font-size:10px;margin-bottom:3px">${f.name}</div>
+    <div style="margin:2px 0"><span style="color:var(--text-dim)">Terrain: </span>${t.name}</div>
+    <div style="margin:2px 0"><span style="color:var(--text-dim)">Armies: </span>${hex.terrain==='mountain'||hex.terrain==='forest'?'—':hex.strength}</div>
+    ${t.bonus?`<div style="margin:2px 0;color:var(--gold)">+${t.bonus} bonus/turn</div>`:''}
+    ${rv?`<div style="margin:2px 0;color:#8a6040;font-size:10px">⟿ River border</div>`:''}
+    ${shieldInfo}
+    ${bridgeInfo}
+    ${canDraft?`<div style="margin-top:5px"><button class="btn btn-draft ${drafted?'active':''}" onclick="toggleDraft()">${drafted?'⇑ Drafting ON':'⇑ Enable Draft'}</button></div>`:''}
+  `;
+}
+
+let selectedHex=null;
+
+function toggleDraft(){
+  if(!selectedHex) return;
+  const k=`${selectedHex.q},${selectedHex.r}`;
+  if(state.draftedSettlements.has(k)){
+    state.draftedSettlements.delete(k);
+    addLog(`Draft disabled at ${selectedHex.terrain} (${selectedHex.q},${selectedHex.r})`,'draft');
+  } else {
+    state.draftedSettlements.add(k);
+    addLog(`Draft enabled at ${selectedHex.terrain} (${selectedHex.q},${selectedHex.r})`,'draft');
+    playSound('draft');
+  }
+  updateSelectedInfo(selectedHex);render();
+}
+
+function toggleDefensePhase(){
+  if(state.currentFaction!==1||state.isAiThinking||state.awaitingBonus) return;
+  state.defensePhase=!state.defensePhase;
+  // Cancel any active drag when entering defense phase
+  if(state.defensePhase){state.dragStart=null;state.dragCurrentPos=null;}
+  updateUI();
+}
+
+// Cycle shield facing on a hex during defense phase
+// Cost: 10% of tile strength (floor 1 must remain)
+function cycleShield(hex){
+  if(!hex||hex.owner!==state.currentFaction||hex.terrain==='mountain'||hex.terrain==='forest') return;
+  if(hex.strength<=1) return; // can't afford shield cost
+
+  const cost=Math.max(1,Math.floor(hex.strength*0.1));
+  if(hex.strength-cost<1) return;
+
+  const cur=getShield(hex);
+  const next=cur===null?0:(cur+1)%6;
+  // Cycle through 0-5, then back to null (clear)
+  const newDir=cur===5?null:next;
+
+  // Deduct cost immediately
+  state.hexes=state.hexes.map(h=>h===hex?{...h,strength:h.strength-cost}:h);
+  setShield(hex,newDir);
+
+  const DIRNAMES=['NE','N','NW','SW','S','SE'];
+  if(newDir===null){
+    addLog(`Shield removed at (${hex.q},${hex.r}) [-${cost}]`,'shield');
+  } else {
+    addLog(`Shield facing ${DIRNAMES[newDir]} at (${hex.q},${hex.r}) [-${cost}]`,'shield');
+    playSound('select');
+  }
+  updateSelectedInfo(hex);
+  updateUI();
+}
+
+// ═══════════════════════════════════════
+// INPUT
+// ═══════════════════════════════════════
+function canvasCoords(e){
+  const r=canvas.getBoundingClientRect();
+  return{x:(e.clientX-r.left)*(canvas.width/r.width),y:(e.clientY-r.top)*(canvas.height/r.height)};
+}
+
+canvas.addEventListener('mousedown',e=>{
+  if(state.currentFaction!==1||state.isAiThinking)return;
+  const{x,y}=canvasCoords(e),hex=getHexAtPoint(x,y);
+  if(!hex)return;
+
+  // Defense phase: clicks cycle shield facings, no other action
+  if(state.defensePhase){
+    cycleShield(hex);
+    selectedHex=hex;updateSelectedInfo(hex);
+    return;
+  }
+
+  if(state.awaitingBonus){placeBonusOnHex(hex);return;}
+
+  const now=Date.now();
+  if(hex===state.lastClickedHex&&now-state.lastClickTime<380){
+    handlePropagate(hex);state.lastClickTime=0;state.lastClickedHex=null;return;
+  }
+  state.lastClickTime=now;state.lastClickedHex=hex;
+
+  selectedHex=hex;updateSelectedInfo(hex);
+
+  if(hex.owner===state.currentFaction&&hex.strength>1&&hex.terrain!=='mountain'&&hex.terrain!=='forest'){
+    state.dragStart=hex;state.dragCurrentPos={x,y};playSound('select');render();
+  }
+});
+
+canvas.addEventListener('mousemove',e=>{
+  const{x,y}=canvasCoords(e),hex=getHexAtPoint(x,y);
+  if(state.dragStart){state.dragCurrentPos={x,y};render();}
+  if(hex!==state.hoveredHex){state.hoveredHex=hex;if(!state.dragStart)render();}
+  if(hex)showTooltip(hex,e.clientX,e.clientY);else hideTooltip();
+});
+
+canvas.addEventListener('mouseup',e=>{
+  if(!state.dragStart)return;
+  const{x,y}=canvasCoords(e),dst=getHexAtPoint(x,y);
+  if(dst&&dst!==state.dragStart){const cost=executeMove(state.dragStart,dst);if(cost>0)spendMove(cost);}
+  state.dragStart=null;state.dragCurrentPos=null;render();
+});
+
+canvas.addEventListener('mouseleave',()=>{
+  hideTooltip();state.hoveredHex=null;
+  if(state.dragStart){state.dragStart=null;state.dragCurrentPos=null;render();}
+});
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+function initGame(){
+  document.getElementById('victoryOverlay').style.display='none';
+  document.getElementById('battleLog').innerHTML='';
+  selectedHex=null;
+  Object.assign(state,{
+    hexes:[],rivers:new Map(),roads:new Set(),roadProgress:{},roadPipsThisTurn:0,
+    bridges:new Map(),draftedSettlements:new Set(),
+    shields:new Map(),defensePhase:false,
+    currentFaction:1,turnCount:1,movesLeft:MOVES_PER_TURN,
+    isAiThinking:false,awaitingBonus:false,bonusAmount:0,
+    dragStart:null,dragCurrentPos:null,hoveredHex:null,
+    lastClickTime:0,lastClickedHex:null,flashEffects:[],
+  });
+
+  for(let q=0;q<COLS;q++){
+    for(let r=0;r<ROWS;r++){
+      const rand=Math.random();
+      let terrain='normal';
+      if(rand<.07)terrain='mountain';
+      else if(rand<.12)terrain='fortress';
+      else if(rand<.17)terrain='village';
+      else if(rand<.24)terrain='forest';
+      let owner=0,strength=terrain==='normal'?1:terrain==='fortress'?5:terrain==='village'?2:0;
+      if(q<3&&r>ROWS-4&&terrain!=='mountain'&&terrain!=='forest'){owner=1;strength=terrain==='normal'?Math.floor(Math.random()*3)+3:strength;}
+      if(q>COLS-4&&r<3&&terrain!=='mountain'&&terrain!=='forest'){owner=2;strength=terrain==='normal'?Math.floor(Math.random()*3)+3:strength;}
+      state.hexes.push({q,r,owner,strength,terrain});
+    }
+  }
+
+  generateRivers();
+
+  addLog('Stone Dominion vs Iron Pact — a new war begins…','gold');
+  addLog('Roads 3t · Bridges 5t · Rivers sienna = costly. ⛨ Defend to set shields (−35% atk, costs 10% armies).','world');
+  updateUI();
+}
+
+(function loop(){if(state.flashEffects.length>0)render();requestAnimationFrame(loop);})();
+initGame();
 </script>
 </body>
 </html>
